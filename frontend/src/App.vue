@@ -1,21 +1,223 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'</script>
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { Info, Download } from 'lucide-vue-next';
+import * as XLSX from 'xlsx';
+
+import Sidebar from './components/Sidebar/Sidebar.vue';
+import Header from './components/Header/Header.vue';
+import OrderInputView from './components/Main/OrderInputView.vue';
+import OrderDetailsView from './components/Main/OrderDetailsView.vue';
+import AppSettingsView from './components/Main/AppSettingsView.vue';
+import { OrderRecognition, GetpreviewData, DeletepreviewData, CreateOrder } from '../wailsjs/go/main/App';
+import type { Order } from './types';
+
+
+// --- State ---
+const activeTab = ref('input');
+const inputText = ref('');
+const orders = ref<Order[]>([]);
+const isAnalyzing = ref(false);
+const isSystemReady = ref(true);
+const statusMessage = ref('系统已就绪 (后端模式)');
+
+// --- Logic ---
+const analyzeOrders = async (isAppend: boolean = false) => {
+  if (!inputText.value.trim()) return;
+  
+  isAnalyzing.value = true;
+  statusMessage.value = '正在识别订单数据...';
+  
+  try {
+    // 调用后端的OrderRecognition方法，第二个参数为模式：0-重来，1-追加
+    const model = isAppend ? 1 : 0;
+    const result = await OrderRecognition(inputText.value, model);
+    console.log(result);
+    // 转换后端返回的数据为Order类型
+    const newOrders: Order[] = [];
+    
+    if (Array.isArray(result)) {
+      orders.value = [];
+      result.forEach((item: any, index: number) => {
+        
+        newOrders.push({
+          id: item.PreviewID || item['VID'],
+          name: item.Recipient || item['收件人'] || '未知姓名',
+          phone: item.Phone || item['手机号'] || '未知电话',
+          address: item.Address || item['收货地址'] || '未知地址',
+          items: item.ProductSpecs || item['商品规格'] || '-',
+          note: item.Remarks || item['备注'] || '-'
+        });
+      });
+    }
+
+    if (newOrders.length > 0) {
+      orders.value = [...orders.value, ...newOrders];
+      inputText.value = '';
+      statusMessage.value = `成功解析 ${newOrders.length} 条订单`;
+    } else {
+      statusMessage.value = '解析失败：格式不匹配';
+    }
+    
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+  } catch (error) {
+    console.error("Error calling backend:", error);
+    statusMessage.value = '解析出错：后端服务异常';
+  } finally {
+    isAnalyzing.value = false;
+  }
+};
+
+const clearInput = () => {
+  inputText.value = '';
+};
+
+const removeOrder = (id: string) => {
+  orders.value = orders.value.filter(o => o.id !== id);
+};
+
+const deleteOrder = async (id: string) => {
+  try {
+    // 调用后端的 DeletepreviewData 方法
+    const result = await DeletepreviewData(parseInt(id));
+    statusMessage.value = result;
+    
+    // 刷新数据
+    await refreshData();
+    
+    // 3秒后恢复默认状态
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+  } catch (error) {
+    console.error('删除失败:', error);
+    statusMessage.value = '删除出错：后端服务异常';
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+  }
+};
+
+const exportToExcel = () => {
+  const worksheet = XLSX.utils.json_to_sheet(orders.value.map(({ id, ...rest }) => rest));
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+  XLSX.writeFile(workbook, `Orders_${new Date().toISOString().split('T')[0]}.xlsx`);
+};
+
+const refreshData = async () => {
+  try {
+    const result = await GetpreviewData();
+    if (Array.isArray(result)) {
+      const newOrders: Order[] = result.map((item: any) => ({
+        id: item.VID,
+        name: item['收件人'] || '未知姓名',
+        phone: item['手机号'] || '未知电话',
+        address: item['收货地址'] || '未知地址',
+        items: item['商品规格'] || '-',
+        note: item['备注'] || '-'
+      }));
+      orders.value = newOrders;
+    } else {
+      // 如果返回的数据不是数组，将 orders 设置为空数组
+      orders.value = [];
+    }
+  } catch (error) {
+    console.error('刷新数据失败:', error);
+    // 发生错误时，也将 orders 设置为空数组
+    orders.value = [];
+  }
+};
+
+const totalOrders = computed(() => orders.value.length);
+const estimatedSize = computed(() => (orders.value.length * 4.1).toFixed(1));
+
+const createOrder = async () => {
+  try {
+    const result = await CreateOrder();
+    statusMessage.value = result;
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+  } catch (error) {
+    console.error('创建订单失败:', error);
+    statusMessage.value = '创建订单出错：后端服务异常';
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+  }
+};
+
+</script>
 
 <template>
-  <img id="logo" alt="Wails logo" src="./assets/images/logo-universal.png"/>
-  <HelloWorld/>
+  <div class="flex h-screen w-full overflow-hidden bg-[#0F1115] text-white font-sans">
+    <Sidebar 
+      v-model:activeTab="activeTab"
+      :isSystemReady="isSystemReady"
+      :statusMessage="statusMessage"
+    />
+
+    <main class="flex-1 flex flex-col min-w-0 bg-[#0F1115]">
+      <Header 
+        userName="Admin User"
+        userRole="高级管理员"
+      />
+
+      <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <!-- Conditional View Rendering -->
+        <OrderInputView 
+          v-if="activeTab === 'input'"
+          v-model:inputText="inputText"
+          :isAnalyzing="isAnalyzing"
+          :orders="orders"
+          @clear="clearInput"
+          @analyze="analyzeOrders"
+          @removeOrder="removeOrder"
+          @clearAllOrders="orders = []"
+          @refreshData="refreshData"
+          @delete="deleteOrder"
+        />
+
+        <OrderDetailsView 
+          v-if="activeTab === 'details'"
+        />
+
+        <AppSettingsView 
+          v-if="activeTab === 'settings'"
+        />
+      </div>
+
+      <!-- Bottom Action Bar (Only show for Input view) -->
+      <footer 
+        v-if="activeTab === 'input'"
+        class="h-20 bg-[#16191E] border-t border-white/5 px-8 flex items-center justify-between shrink-0"
+      >
+        <div class="flex items-center gap-4 text-sm text-slate-400">
+          <span class="flex items-center gap-2">
+            <Info class="w-4 h-4 text-blue-500" />
+            共计识别 {{ totalOrders }} 条订单，预计文件大小 {{ estimatedSize }} KB
+          </span>
+        </div>
+        <div class="flex items-center gap-4">
+          <button @click="createOrder" class="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-all">
+            确认数据无误
+          </button>
+          <button 
+            @click="exportToExcel"
+            :disabled="orders.length === 0"
+            class="px-10 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold flex items-center gap-2 shadow-xl shadow-blue-600/30 transition-all"
+          >
+            导出 XLSX 表格 <Download class="w-4 h-4" />
+          </button>
+        </div>
+      </footer>
+    </main>
+  </div>
 </template>
 
 <style>
-#logo {
-  display: block;
-  width: 50%;
-  height: 50%;
-  margin: auto;
-  padding: 10% 0 0;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  background-origin: content-box;
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&f[]=cabinet-grotesk@800&display=swap');
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
 }
 </style>

@@ -1,4 +1,4 @@
-package order_query
+package order
 
 import (
 	"order_server/go/common"

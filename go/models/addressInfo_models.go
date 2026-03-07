@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"strconv"
 )
 
 // 商品规格项 - 只有 Name 和 Weight 两个字段
@@ -45,9 +46,27 @@ func (p *ProductSpecsJSON) Scan(value interface{}) error {
 // AddressInfo 地址信息结构体
 type AddressInfo struct {
 	Model
+	PreviewID    uint             `gorm:"-" json:"VID"`
 	Recipient    string           `gorm:"recipient" json:"收件人"`
 	Phone        string           `gorm:"phone" json:"手机号"`
 	Address      string           `gorm:"address" json:"收货地址"`
 	ProductSpecs ProductSpecsJSON `gorm:"productSpecs;type:json" json:"商品规格"`
 	Remarks      string           `gorm:"remarks" json:"备注"`
+}
+
+// 获取商品规格字符串
+func (address AddressInfo) ProductSpecsString(remarks bool) string {
+	var specsString string
+	for i, spec := range address.ProductSpecs {
+		specsString += "【"
+		if i == len(address.ProductSpecs)-1 {
+			specsString += spec.Name + strconv.Itoa(spec.Weight) + "斤】"
+			if remarks {
+				specsString += address.Remarks
+			}
+			break
+		}
+		specsString += spec.Name + strconv.Itoa(spec.Weight) + "斤】,"
+	}
+	return specsString
 }

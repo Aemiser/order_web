@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"order_server/go/models"
+	"order_server/go/models/enum"
 	"order_server/go/server/config"
-	"order_server/go/server/order_query"
-	"order_server/go/server/order_recognition"
+	"order_server/go/server/order"
+	ordertutil "order_server/go/utils/order"
 )
 
 // App struct
@@ -31,8 +32,8 @@ func (a *App) Greet(name string) string {
 }
 
 // 订单识别
-func (a *App) OrderRecognition(context string) {
-	order_recognition.OrderRec(context)
+func (a *App) OrderRecognition(context string, model enum.RecPreviewType) []ordertutil.ExceladdressInfo {
+	return order.OrderRec(context, model)
 }
 
 // 获取配置消息
@@ -46,6 +47,38 @@ func (a *App) SetConfig(conf config.ReConf) {
 }
 
 // 查询订单详情
-func (a *App) OrderQuery(oq order_query.OrderQueryRequest) []models.AddressInfo {
-	return order_query.OrderQuery(oq)
+func (a *App) OrderQuery(oq order.OrderQueryRequest) []models.AddressInfo {
+	return order.OrderQuery(oq)
+}
+
+// 获取预览数据
+func (a *App) GetpreviewData() []ordertutil.ExceladdressInfo {
+	return order.GetpreviewData()
+}
+
+// 修改预览数据
+func (a *App) SetpreviewData(addressList ordertutil.ExceladdressInfo) string {
+	err := order.SetpreviewData(addressList)
+	if err != nil {
+		return err.Error()
+	}
+	return "修改成功"
+}
+
+// 删除预览数据
+func (a *App) DeletepreviewData(id uint) string {
+	err := order.DeletepreviewData(id)
+	if err == nil {
+		return "删除成功"
+	}
+	return err.Error()
+}
+
+// 订单导入数据库
+func (a *App) CreateOrder() string {
+	err := order.CreateOrder()
+	if err == nil {
+		return "订单导入成功"
+	}
+	return err.Error()
 }

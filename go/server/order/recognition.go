@@ -1,4 +1,4 @@
-package order_recognition
+package order
 
 import (
 	"bytes"
@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"order_server/go/global"
 	"order_server/go/models"
+	"order_server/go/models/enum"
+	alog "order_server/go/server/log"
+	ordertutil "order_server/go/utils/order"
 	"strings"
 	"time"
 
@@ -150,25 +153,39 @@ const systemPrompt = `## 角色与任务
 【黄柠檬10斤】
 【广香一级30斤】（记得发两箱哦~~~）`
 
-func OrderRec(inputText string) []models.AddressInfo {
+func OrderRec(inputText string, previewType enum.RecPreviewType) []ordertutil.ExceladdressInfo {
 	apiKey := global.Config.Deepseek.Apikey
-
-	fmt.Println("========== 原始输入 ==========")
-	fmt.Println(inputText)
-	fmt.Println("\n========== 正在调用DeepSeek API进行识别 ==========")
-
 	// 调用API进行识别
 	addressList, err := RecognizeAddresses(apiKey, inputText)
 	if err != nil {
 		logrus.Errorf("识别失败: %v", err)
+		alog.Logaction(enum.LogWarnLevel, "DeepSeek API识别识别失败", err.Error())
 		return nil
 	}
+	// vid赋值
+	addressList = ordertutil.SetVid(addressList)
 
-	//// 打印JSON格式结果
-	//fmt.Println("\n========== JSON格式结果 ==========")
-	//jsonData, _ := json.MarshalIndent(addressList, "", "  ")
-	//fmt.Println(string(jsonData))
-	return addressList
+	// JSON格式
+	jsonData, _ := json.MarshalIndent(addressList, "", "  ")
+	fmt.Println(string(jsonData))
+
+	// 日志记录
+	logcontent := "原始输入:" + "\n" + inputText + "\n" + "识别结果:" + "\n" + string(jsonData)
+	alog.Logaction(enum.LogInfoLevel, "DeepSeek API识别", logcontent)
+
+	// 预览数据模式判断
+	// 追加
+	if previewType == enum.RecPreviewType_ADD {
+		global.AddressList = append(global.AddressList, addressList...)
+	}
+
+	// 清空重新识别
+	if previewType == enum.RecPreviewType_RE {
+		global.AddressList = addressList
+	}
+
+	// 转换成预览数据返回给前台
+	return ordertutil.AddressToExcelAddress(global.AddressList)
 }
 
 // RecognizeAddresses 调用DeepSeek API识别多条地址

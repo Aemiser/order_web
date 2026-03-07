@@ -2,6 +2,7 @@ package global
 
 import (
 	"order_server/go/conf"
+	"order_server/go/models"
 
 	"gorm.io/gorm"
 )
@@ -11,6 +12,7 @@ const (
 )
 
 var (
-	Config *conf.Config
-	Db     *gorm.DB
+	Config      *conf.Config
+	Db          *gorm.DB
+	AddressList []models.AddressInfo
 )

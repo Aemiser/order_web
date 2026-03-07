@@ -3,18 +3,19 @@ package save
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/xuri/excelize/v2"
 	"order_server/go/models"
+	"order_server/go/utils/order"
 	"os"
 	"path/filepath"
+
+	"github.com/xuri/excelize/v2"
 )
 
 // SaveToExcel 保存地址信息到Excel文件
 func SaveToExcel(_addressList []models.AddressInfo, filename string) (string, error) {
-
 	// 转换为ExceladdressInfo
-	var addressList []ExceladdressInfo
-	addressList = AddressToExcelAddress(_addressList)
+	var addressList []ordertutil.ExceladdressInfo
+	addressList = ordertutil.AddressToExcelAddress(_addressList)
 
 	// 创建Excel文件
 	f := excelize.NewFile()
