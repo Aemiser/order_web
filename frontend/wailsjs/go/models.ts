@@ -96,6 +96,7 @@ export namespace models {
 	    "收货地址": string;
 	    "商品规格": ProductSpec[];
 	    "备注": string;
+	    Isstorage: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new AddressInfo(source);
@@ -113,6 +114,7 @@ export namespace models {
 	        this["收货地址"] = source["收货地址"];
 	        this["商品规格"] = this.convertValues(source["商品规格"], ProductSpec);
 	        this["备注"] = source["备注"];
+	        this.Isstorage = source["Isstorage"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -143,6 +145,11 @@ export namespace order {
 	    page: number;
 	    key: string;
 	    order: string;
+	    Addresssinfo: models.AddressInfo;
+	    // Go type: time
+	    startTime: any;
+	    // Go type: time
+	    endTime: any;
 	
 	    static createFrom(source: any = {}) {
 	        return new OrderQueryRequest(source);
@@ -154,7 +161,60 @@ export namespace order {
 	        this.page = source["page"];
 	        this.key = source["key"];
 	        this.order = source["order"];
+	        this.Addresssinfo = this.convertValues(source["Addresssinfo"], models.AddressInfo);
+	        this.startTime = this.convertValues(source["startTime"], null);
+	        this.endTime = this.convertValues(source["endTime"], null);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class OrderQueryResponse {
+	    list: ordertutil.ExceladdressInfo[];
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new OrderQueryResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.list = this.convertValues(source["list"], ordertutil.ExceladdressInfo);
+	        this.count = source["count"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }
@@ -162,6 +222,8 @@ export namespace order {
 export namespace ordertutil {
 	
 	export class ExceladdressInfo {
+	    // Go type: time
+	    createdAt: any;
 	    VID: number;
 	    "收件人": string;
 	    "手机号": string;
@@ -175,6 +237,7 @@ export namespace ordertutil {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.createdAt = this.convertValues(source["createdAt"], null);
 	        this.VID = source["VID"];
 	        this["收件人"] = source["收件人"];
 	        this["手机号"] = source["手机号"];
@@ -182,6 +245,24 @@ export namespace ordertutil {
 	        this["商品规格"] = source["商品规格"];
 	        this["备注"] = source["备注"];
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }

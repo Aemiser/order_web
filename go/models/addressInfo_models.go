@@ -52,6 +52,7 @@ type AddressInfo struct {
 	Address      string           `gorm:"address" json:"收货地址"`
 	ProductSpecs ProductSpecsJSON `gorm:"productSpecs;type:json" json:"商品规格"`
 	Remarks      string           `gorm:"remarks" json:"备注"`
+	Isstorage    bool             `gorm:"-" json:"Isstorage"`
 }
 
 // 获取商品规格字符串

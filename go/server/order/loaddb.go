@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"order_server/go/global"
+	"order_server/go/models"
 	"order_server/go/models/enum"
 	alog "order_server/go/server/log"
 	ordertutil "order_server/go/utils/order"
@@ -75,7 +76,23 @@ func CreateOrder() error {
 		return errors.New("请先识别订单信息")
 	}
 
-	err := global.Db.Create(&global.AddressList).Error
+	var orderlist []models.AddressInfo
+	// 找到未入库的订单
+	for i := range global.AddressList {
+		if !global.AddressList[i].Isstorage {
+			// 添加到待保存列表（值拷贝）
+			orderlist = append(orderlist, global.AddressList[i])
+			// 修改原切片的 Isstorage 字段为 true
+			global.AddressList[i].Isstorage = true
+		}
+	}
+
+	if len(orderlist) == 0 {
+		return errors.New("没有需要入库的订单")
+	}
+
+	fmt.Println(orderlist)
+	err := global.Db.Create(&orderlist).Error
 	if err != nil {
 		alog.Logaction(enum.LogErrLevel, "创建订单失败", err.Error())
 		return err

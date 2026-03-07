@@ -197,7 +197,7 @@ func RecognizeAddresses(apiKey, inputText string) ([]models.AddressInfo, error) 
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: inputText},
 		},
-		Temperature: 0.1, // 低温使输出更确定
+		Temperature: 0.5, // 低温使输出更确定
 		MaxTokens:   2000,
 		Stream:      false,
 	}
@@ -209,7 +209,7 @@ func RecognizeAddresses(apiKey, inputText string) ([]models.AddressInfo, error) 
 
 	// 创建HTTP客户端（设置超时）
 	client := &http.Client{
-		Timeout: 60 * time.Second,
+		Timeout: 120 * time.Second,
 	}
 
 	// 创建请求

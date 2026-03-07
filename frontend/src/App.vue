@@ -4,6 +4,7 @@ import { Info, Download } from 'lucide-vue-next';
 import * as XLSX from 'xlsx';
 
 import Sidebar from './components/Sidebar/Sidebar.vue';
+import demo from './components/demo.vue';
 import Header from './components/Header/Header.vue';
 import OrderInputView from './components/Main/OrderInputView.vue';
 import OrderDetailsView from './components/Main/OrderDetailsView.vue';
@@ -19,6 +20,7 @@ const orders = ref<Order[]>([]);
 const isAnalyzing = ref(false);
 const isSystemReady = ref(true);
 const statusMessage = ref('系统已就绪 (后端模式)');
+const showConfirmModal = ref(false);
 
 // --- Logic ---
 const analyzeOrders = async (isAppend: boolean = false) => {
@@ -94,7 +96,27 @@ const deleteOrder = async (id: string) => {
 };
 
 const exportToExcel = () => {
-  const worksheet = XLSX.utils.json_to_sheet(orders.value.map(({ id, ...rest }) => rest));
+  // 定义字段映射关系
+  const fieldMap = {
+    name: '收件人',
+    phone: '手机号',
+    address: '收货地址',
+    items: '规格信息',
+    note: '备注'
+  };
+
+  // 转换数据：只保留需要的字段并重命名
+  const exportData = orders.value.map(order => {
+    const newRow = {};
+    Object.keys(fieldMap).forEach(key => {
+      if (order.hasOwnProperty(key)) {
+        newRow[fieldMap[key]] = order[key];
+      }
+    });
+    return newRow;
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
   XLSX.writeFile(workbook, `Orders_${new Date().toISOString().split('T')[0]}.xlsx`);
@@ -127,7 +149,15 @@ const refreshData = async () => {
 const totalOrders = computed(() => orders.value.length);
 const estimatedSize = computed(() => (orders.value.length * 4.1).toFixed(1));
 
-const createOrder = async () => {
+const createOrder = () => {
+  // 显示确认模态弹窗
+  showConfirmModal.value = true;
+};
+
+const handleConfirm = async () => {
+  // 关闭模态弹窗
+  showConfirmModal.value = false;
+  
   try {
     const result = await CreateOrder();
     statusMessage.value = result;
@@ -139,25 +169,30 @@ const createOrder = async () => {
   }
 };
 
+const handleCancel = () => {
+  // 关闭模态弹窗
+  showConfirmModal.value = false;
+};
+
 </script>
 
 <template>
   <div class="flex h-screen w-full overflow-hidden bg-[#0F1115] text-white font-sans">
-    <Sidebar 
+    <Sidebar
       v-model:activeTab="activeTab"
       :isSystemReady="isSystemReady"
       :statusMessage="statusMessage"
     />
 
     <main class="flex-1 flex flex-col min-w-0 bg-[#0F1115]">
-      <Header 
+      <Header
         userName="Admin User"
         userRole="高级管理员"
       />
 
       <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
         <!-- Conditional View Rendering -->
-        <OrderInputView 
+        <OrderInputView
           v-if="activeTab === 'input'"
           v-model:inputText="inputText"
           :isAnalyzing="isAnalyzing"
@@ -170,13 +205,16 @@ const createOrder = async () => {
           @delete="deleteOrder"
         />
 
-        <OrderDetailsView 
+        <OrderDetailsView
           v-if="activeTab === 'details'"
+          :activeTab="activeTab"
         />
 
-        <AppSettingsView 
+        <AppSettingsView
           v-if="activeTab === 'settings'"
         />
+
+<!--        <demo />-->
       </div>
 
       <!-- Bottom Action Bar (Only show for Input view) -->
@@ -203,6 +241,22 @@ const createOrder = async () => {
           </button>
         </div>
       </footer>
+
+      <!-- Confirmation Modal -->
+      <div v-if="showConfirmModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
+          <h3 class="text-xl font-bold text-white mb-4 font-display">确认操作</h3>
+          <p class="text-slate-300 mb-6">请确保今日的订单绝对正确，不然会影响结账！！！</p>
+          <div class="flex justify-end gap-4">
+            <button @click="handleCancel" class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all">
+              取消
+            </button>
+            <button @click="handleConfirm" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all">
+              确定
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 </template>

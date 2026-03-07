@@ -34,7 +34,7 @@ func (p PageInfo) GetOffset() int {
 
 type Options struct {
 	PageInfo     PageInfo
-	Likes        []string
+	Likes        []string // 关键字模糊查询的列
 	Preloads     []string
 	Where        *gorm.DB
 	Debug        bool
@@ -51,7 +51,7 @@ func ListQuery[T any](model T, options Options) (list []T, count int, err error)
 
 	// 模糊查询
 	if len(options.Likes) > 0 && options.PageInfo.Key != "" {
-		fmt.Println("模糊查询列:", options.Likes)
+		fmt.Println("关键词模糊查询列:", options.Likes)
 		likes := global.Db.Where("")
 		for _, column := range options.Likes {
 			likes.Or(

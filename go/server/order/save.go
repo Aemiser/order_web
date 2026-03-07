@@ -12,7 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func SaveToExcel(addressList []models.AddressInfo) {
+func SaveToExcel() {
+	addressList := global.AddressList
 	now := time.Now()
 	filename := fmt.Sprintf("%s.xlsx", now.Format("2006-01-02"))
 	// 保存为Excel文件

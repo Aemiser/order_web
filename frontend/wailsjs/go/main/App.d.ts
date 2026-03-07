@@ -3,7 +3,6 @@
 import {config} from '../models';
 import {ordertutil} from '../models';
 import {order} from '../models';
-import {models} from '../models';
 import {enum} from '../models';
 
 export function CreateOrder():Promise<string>;
@@ -16,9 +15,11 @@ export function GetpreviewData():Promise<Array<ordertutil.ExceladdressInfo>>;
 
 export function Greet(arg1:string):Promise<string>;
 
-export function OrderQuery(arg1:order.OrderQueryRequest):Promise<Array<models.AddressInfo>>;
+export function OrderQuery(arg1:order.OrderQueryRequest):Promise<order.OrderQueryResponse>;
 
 export function OrderRecognition(arg1:string,arg2:enum.RecPreviewType):Promise<Array<ordertutil.ExceladdressInfo>>;
+
+export function SaveToExcel():Promise<string>;
 
 export function SetConfig(arg1:config.ReConf):Promise<void>;
 

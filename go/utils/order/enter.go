@@ -2,6 +2,7 @@ package ordertutil
 
 import (
 	"fmt"
+	"order_server/go/global"
 	"order_server/go/models"
 	"regexp"
 	"strconv"
@@ -49,9 +50,10 @@ func Specprocessing(input string) (models.ProductSpecsJSON, error) {
 }
 
 func SetVid(infolist []models.AddressInfo) []models.AddressInfo {
+	length := len(global.AddressList)
 	for i := range infolist {
 		addr := &infolist[i] // 获取元素的指针
-		addr.PreviewID = uint(i + 1)
+		addr.PreviewID = uint(length + i + 1)
 	}
 	return infolist
 }

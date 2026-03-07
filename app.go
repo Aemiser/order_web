@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"order_server/go/models"
+	"order_server/go/global"
 	"order_server/go/models/enum"
 	"order_server/go/server/config"
+	alog "order_server/go/server/log"
 	"order_server/go/server/order"
 	ordertutil "order_server/go/utils/order"
+
+	"github.com/sirupsen/logrus"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
@@ -47,7 +51,7 @@ func (a *App) SetConfig(conf config.ReConf) {
 }
 
 // 查询订单详情
-func (a *App) OrderQuery(oq order.OrderQueryRequest) []models.AddressInfo {
+func (a *App) OrderQuery(oq order.OrderQueryRequest) order.OrderQueryResponse {
 	return order.OrderQuery(oq)
 }
 
@@ -81,4 +85,27 @@ func (a *App) CreateOrder() string {
 		return "订单导入成功"
 	}
 	return err.Error()
+}
+
+// 导出预览数据xlsx
+func (a *App) SaveToExcel() string {
+	// 选择文件夹
+	folderPath, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:                "选择保存文件夹",
+		DefaultDirectory:     "~",  // 默认打开用户目录
+		CanCreateDirectories: true, // 允许用户创建新文件夹
+	})
+	if err != nil {
+		logrus.Errorf("选择文件夹失败: %v", err)
+		alog.Logaction(enum.LogErrLevel, "选择文件夹失败", err.Error())
+	}
+	global.Config.SavePath.Excel = folderPath
+
+	order.SaveToExcel()
+
+	// 使用 BrowserOpenURL 打开文件夹
+	// 在 Windows 上会打开资源管理器，macOS 上打开 Finder
+	runtime.BrowserOpenURL(a.ctx, folderPath)
+
+	return "导出成功"
 }
