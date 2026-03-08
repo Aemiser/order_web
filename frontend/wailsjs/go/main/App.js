@@ -10,6 +10,10 @@ export function DeletepreviewData(arg1) {
   return window['go']['main']['App']['DeletepreviewData'](arg1);
 }
 
+export function GetChackDaydata(arg1, arg2) {
+  return window['go']['main']['App']['GetChackDaydata'](arg1, arg2);
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
@@ -36,6 +40,10 @@ export function SaveToExcel() {
 
 export function SetConfig(arg1) {
   return window['go']['main']['App']['SetConfig'](arg1);
+}
+
+export function SetProductBelong(arg1) {
+  return window['go']['main']['App']['SetProductBelong'](arg1);
 }
 
 export function SetpreviewData(arg1) {

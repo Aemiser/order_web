@@ -2,6 +2,7 @@ package checkout
 
 import (
 	"fmt"
+	"order_server/go/models"
 	"order_server/go/utils/execl"
 	"sort"
 	"strconv"
@@ -10,41 +11,34 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-// Order 订单结构
-type Order struct {
-	Date        time.Time
-	ProductName string
-	Spec        string
-	Quantity    int
-	Unit        string
-}
-
 // ProductSpecs 商品规格集合
 type ProductSpecs struct {
-	Name     string
-	Specs    []string
-	SpecMap  map[string]int // 商品规格对应的数量
-	TotalQty int
+	Name            string
+	Specs           []string
+	SpecMap         map[string]int     // 规格 -> 总数量
+	PricePerKgMap   map[string]float64 // 规格 -> 每斤价格
+	PricePerItemMap map[string]float64 // 规格 -> 每件价格
+	TotalQty        int
 }
 
 // SpecManager 规格管理器
 type SpecManager struct {
-	Orders     []Order
-	DateMap    map[string][]Order
-	ProductMap map[string]*ProductSpecs //商品对应下面的规格信息
+	Orders     []models.Order
+	DateMap    map[string][]models.Order
+	ProductMap map[string]*ProductSpecs
 }
 
 // NewSpecManager 创建规格管理器
 func NewSpecManager() *SpecManager {
 	return &SpecManager{
-		Orders:     make([]Order, 0),
-		DateMap:    make(map[string][]Order),
+		Orders:     make([]models.Order, 0),
+		DateMap:    make(map[string][]models.Order),
 		ProductMap: make(map[string]*ProductSpecs),
 	}
 }
 
 // AddOrder 添加订单
-func (sm *SpecManager) AddOrder(order Order) {
+func (sm *SpecManager) AddOrder(order models.Order) {
 	sm.Orders = append(sm.Orders, order)
 
 	// 使用格式化的日期字符串作为key
@@ -52,21 +46,28 @@ func (sm *SpecManager) AddOrder(order Order) {
 	sm.DateMap[dateKey] = append(sm.DateMap[dateKey], order)
 
 	// 按商品分组
-	// 遍历利商品，对不存在的商品，就创建一个存入map中
 	if _, exists := sm.ProductMap[order.ProductName]; !exists {
 		sm.ProductMap[order.ProductName] = &ProductSpecs{
-			Name:    order.ProductName,
-			Specs:   []string{},
-			SpecMap: make(map[string]int),
+			Name:            order.ProductName,
+			Specs:           []string{},
+			SpecMap:         make(map[string]int),
+			PricePerKgMap:   make(map[string]float64),
+			PricePerItemMap: make(map[string]float64),
+			TotalQty:        0,
 		}
 	}
 
-	// 从该订单中获取该商品分类
 	product := sm.ProductMap[order.ProductName]
-	// 对于该商品下的规格，若存在则进行加法，不存在则创建key.value
 	product.SpecMap[order.Spec] = product.SpecMap[order.Spec] + order.Quantity
-	// 统计商品分类总数
 	product.TotalQty += order.Quantity
+
+	// 更新价格信息（如果有）
+	if order.PricePerKg > 0 {
+		product.PricePerKgMap[order.Spec] = order.PricePerKg
+	}
+	if order.PricePerItem > 0 {
+		product.PricePerItemMap[order.Spec] = order.PricePerItem
+	}
 }
 
 // BuildSpecList 构建规格列表
@@ -85,7 +86,7 @@ func (sm *SpecManager) BuildSpecList() {
 	}
 }
 
-// GenerateExcel 生成Excel
+// GenerateExcel 生成Excel（带价格和金额计算）
 func (sm *SpecManager) GenerateExcel(filename string) error {
 	sm.BuildSpecList()
 
@@ -113,17 +114,19 @@ func (sm *SpecManager) GenerateExcel(filename string) error {
 	styles := sm.createStyles(f)
 
 	// ===== 设置表头结构 =====
-	// 第一行：商品名称（跨两行？不，这里商品名称应该在第一行，日期在第二行）
-	// 修正：日期应该独占两行（合并行），商品名称在右边占据多列
+	// 每个商品规格占据4行：
+	// 第1行：商品名称
+	// 第2行：规格
+	// 第3行：每斤/元 和 每件/元
+	// 第4行：金额
 
-	// 第1行：空出A列（留给日期合并行用），从B列开始放商品名称
 	col := 2 // B列开始
 
 	// 记录每个商品的起始列和结束列
 	productCols := make(map[string]int)    // 商品起始列
 	productEndCols := make(map[string]int) // 商品结束列
 
-	// 第1行：设置商品名称（占据第1行）
+	// 第1行：设置商品名称
 	for _, product := range products {
 		specs := sm.ProductMap[product].Specs
 		productCols[product] = col
@@ -139,8 +142,8 @@ func (sm *SpecManager) GenerateExcel(filename string) error {
 		col += len(specs)
 	}
 
-	// 第2行：设置规格（在第2行）
-	col = 2 // 重置列，从B列开始
+	// 第2行：设置规格
+	col = 2 // 重置列
 	for _, product := range products {
 		specs := sm.ProductMap[product].Specs
 		for i, spec := range specs {
@@ -151,11 +154,73 @@ func (sm *SpecManager) GenerateExcel(filename string) error {
 		col += len(specs)
 	}
 
-	// ===== 关键修正：日期列独占两行（合并行）=====
-	// 合并A1和A2单元格，让日期标题独占两行
-	f.MergeCell(sheetName, "A1", "A2")
+	// 第3行：设置价格信息（每斤/元 和 每件/元）
+	col = 2 // 重置列
+	priceRow := 3
+	priceInfoStyle, _ := f.NewStyle(&excelize.Style{
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#FFE699"},
+			Pattern: 1,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			WrapText:   true, // 允许文本换行
+		},
+	})
+
+	for _, product := range products {
+		specs := sm.ProductMap[product].Specs
+		productInfo := sm.ProductMap[product]
+
+		for i, spec := range specs {
+			cell := execl.GetColumnLetter(col+i) + strconv.Itoa(priceRow)
+
+			// 获取价格信息
+			pricePerKg := productInfo.PricePerKgMap[spec]
+			pricePerItem := productInfo.PricePerItemMap[spec]
+
+			// 显示价格信息
+			priceText := ""
+			if pricePerKg > 0 {
+				priceText += fmt.Sprintf("每斤:¥%.2f", pricePerKg)
+			}
+			if pricePerItem > 0 {
+				if priceText != "" {
+					priceText += "\n"
+				}
+				priceText += fmt.Sprintf("每件:¥%.2f", pricePerItem)
+			}
+			if priceText == "" {
+				priceText = "未设置"
+			}
+
+			f.SetCellValue(sheetName, cell, priceText)
+			f.SetCellStyle(sheetName, cell, cell, priceInfoStyle)
+
+			// 设置行高适应多行文本
+			f.SetRowHeight(sheetName, priceRow, 30)
+		}
+		col += len(specs)
+	}
+
+	// 第4行：设置金额标题
+	amountTitleRow := 4
+	col = 2 // 重置列
+	for _, product := range products {
+		specs := sm.ProductMap[product].Specs
+		for i := range specs {
+			cell := execl.GetColumnLetter(col+i) + strconv.Itoa(amountTitleRow)
+			f.SetCellValue(sheetName, cell, "金额(元)")
+			f.SetCellStyle(sheetName, cell, cell, styles["specHeader"])
+		}
+		col += len(specs)
+	}
+
+	// 日期列合并4行（标题行）
+	f.MergeCell(sheetName, "A1", "A4")
 	f.SetCellValue(sheetName, "A1", "日期")
-	f.SetCellStyle(sheetName, "A1", "A2", styles["dateHeader"])
+	f.SetCellStyle(sheetName, "A1", "A4", styles["dateHeader"])
 
 	// 设置垂直居中样式
 	verticalCenterStyle, _ := f.NewStyle(&excelize.Style{
@@ -164,18 +229,21 @@ func (sm *SpecManager) GenerateExcel(filename string) error {
 			Horizontal: "center",
 		},
 	})
-	f.SetCellStyle(sheetName, "A1", "A1", verticalCenterStyle)
+	f.SetCellStyle(sheetName, "A1", "A4", verticalCenterStyle)
 
-	// 填充数据 - 从第3行开始
+	// 填充数据 - 从第5行开始
+	dataStartRow := 5
+	// 先填充数量数据
 	for rowIdx, dateStr := range dates {
-		row := rowIdx + 3
+		row := rowIdx + dataStartRow
 
 		// 解析日期
 		date, _ := time.Parse("2006-01-02", dateStr)
 
-		// 设置日期（格式：MM-DD）
+		// 设置日期
 		dateCell := fmt.Sprintf("A%d", row)
 		f.SetCellValue(sheetName, dateCell, execl.FormatShortDate(date))
+		f.SetCellStyle(sheetName, dateCell, dateCell, styles["dateData"])
 
 		// 设置每个商品的数量
 		for _, product := range products {
@@ -191,24 +259,22 @@ func (sm *SpecManager) GenerateExcel(filename string) error {
 					}
 				}
 
-				cell := execl.GetColumnLetter(startCol+i) + strconv.Itoa(row)
+				// 数量单元格
+				qtyCell := execl.GetColumnLetter(startCol+i) + strconv.Itoa(row)
 				if qty > 0 {
-					f.SetCellValue(sheetName, cell, qty)
-					f.SetCellStyle(sheetName, cell, cell, styles["data"])
-				} else {
-					// 空单元格
-					f.SetCellStyle(sheetName, cell, cell, styles["empty"])
+					f.SetCellValue(sheetName, qtyCell, qty)
 				}
+				f.SetCellStyle(sheetName, qtyCell, qtyCell, styles["data"])
 			}
 		}
 	}
 
-	// 添加合计行
-	totalRow := len(dates) + 3
-	f.SetCellValue(sheetName, fmt.Sprintf("A%d", totalRow), "合计")
-	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", totalRow), fmt.Sprintf("A%d", totalRow), styles["total"])
+	// 添加数量合计行
+	totalQtyRow := dataStartRow + len(dates)
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", totalQtyRow), "总件数")
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", totalQtyRow), fmt.Sprintf("A%d", totalQtyRow), styles["total"])
 
-	// 计算每个规格的合计
+	// 计算每个规格的总数量
 	for _, product := range products {
 		startCol := productCols[product]
 		specs := sm.ProductMap[product].Specs
@@ -223,36 +289,158 @@ func (sm *SpecManager) GenerateExcel(filename string) error {
 				}
 			}
 
-			cell := execl.GetColumnLetter(startCol+i) + strconv.Itoa(totalRow)
+			cell := execl.GetColumnLetter(startCol+i) + strconv.Itoa(totalQtyRow)
 			if total > 0 {
 				f.SetCellValue(sheetName, cell, total)
-				f.SetCellStyle(sheetName, cell, cell, styles["total"])
+			}
+			f.SetCellStyle(sheetName, cell, cell, styles["total"])
+		}
+	}
+
+	// 添加价格行（每斤/元和每件/元）
+	priceRow2 := totalQtyRow + 1
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", priceRow2), "每斤/元")
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", priceRow2+1), "每件/元")
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", priceRow2), fmt.Sprintf("A%d", priceRow2+1), styles["specHeader"])
+
+	// 填充价格信息
+	col = 2
+	for _, product := range products {
+		specs := sm.ProductMap[product].Specs
+		productInfo := sm.ProductMap[product]
+
+		for i, spec := range specs {
+			// 每斤价格
+			pricePerKgCell := execl.GetColumnLetter(col+i) + strconv.Itoa(priceRow2)
+			if productInfo.PricePerKgMap[spec] > 0 {
+				f.SetCellValue(sheetName, pricePerKgCell, productInfo.PricePerKgMap[spec])
+				// 设置数字格式
+				priceStyle, _ := f.NewStyle(&excelize.Style{
+					NumFmt: 4,
+					Alignment: &excelize.Alignment{
+						Horizontal: "center",
+					},
+				})
+				f.SetCellStyle(sheetName, pricePerKgCell, pricePerKgCell, priceStyle)
+			}
+
+			// 每件价格（下一行）
+			pricePerItemCell := execl.GetColumnLetter(col+i) + strconv.Itoa(priceRow2+1)
+			var pricePerItem float64
+			if productInfo.PricePerItemMap[spec] > 0 {
+				pricePerItem = productInfo.PricePerItemMap[spec]
+				f.SetCellValue(sheetName, pricePerItemCell, pricePerItem)
+			} else if productInfo.PricePerKgMap[spec] > 0 {
+				// 根据每斤价格计算每件价格
+				jinCount := execl.ExtractJinCount(spec)
+				pricePerItem = jinCount * productInfo.PricePerKgMap[spec]
+				f.SetCellValue(sheetName, pricePerItemCell, pricePerItem)
+			}
+
+			if pricePerItem > 0 {
+				priceStyle, _ := f.NewStyle(&excelize.Style{
+					NumFmt: 4,
+					Alignment: &excelize.Alignment{
+						Horizontal: "center",
+					},
+				})
+				f.SetCellStyle(sheetName, pricePerItemCell, pricePerItemCell, priceStyle)
+			}
+		}
+		col += len(specs)
+	}
+
+	// 添加金额行
+	amountRow := priceRow2 + 2
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", amountRow), "金额(元)")
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", amountRow), fmt.Sprintf("A%d", amountRow), styles["total"])
+
+	// 计算每个规格的金额
+	totalAmount := 0.0
+	for _, product := range products {
+		startCol := productCols[product]
+		specs := sm.ProductMap[product].Specs
+		productInfo := sm.ProductMap[product]
+
+		for i, spec := range specs {
+			// 计算该规格的总数量
+			totalQty := 0
+			for _, orders := range sm.DateMap {
+				for _, order := range orders {
+					if order.ProductName == product && order.Spec == spec {
+						totalQty += order.Quantity
+					}
+				}
+			}
+
+			if totalQty > 0 {
+				// 计算每件价格
+				var pricePerItem float64
+				if productInfo.PricePerItemMap[spec] > 0 {
+					pricePerItem = productInfo.PricePerItemMap[spec]
+				} else if productInfo.PricePerKgMap[spec] > 0 {
+					jinCount := execl.ExtractJinCount(spec)
+					pricePerItem = jinCount * productInfo.PricePerKgMap[spec]
+				}
+
+				if pricePerItem > 0 {
+					amount := float64(totalQty) * pricePerItem
+					totalAmount += amount
+
+					cell := execl.GetColumnLetter(startCol+i) + strconv.Itoa(amountRow)
+					f.SetCellValue(sheetName, cell, amount)
+
+					// 设置金额格式为两位小数
+					amountStyle, _ := f.NewStyle(&excelize.Style{
+						NumFmt: 4, // 4 是会计格式，显示两位小数
+						Alignment: &excelize.Alignment{
+							Horizontal: "right",
+						},
+					})
+					f.SetCellStyle(sheetName, cell, cell, amountStyle)
+				}
 			}
 		}
 	}
 
-	// 设置列宽
-	f.SetColWidth(sheetName, "A", "A", 10) // 日期列
+	// 添加总金额行
+	totalAmountRow := amountRow + 1
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", totalAmountRow), "总金额")
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", totalAmountRow), fmt.Sprintf("A%d", totalAmountRow), styles["total"])
 
+	// 在总金额位置填写汇总金额
+	lastCol := execl.GetColumnLetter(col - 1)
+	f.SetCellValue(sheetName, fmt.Sprintf("%s%d", lastCol, totalAmountRow), totalAmount)
+
+	// 设置总金额格式
+	totalAmountStyle, _ := f.NewStyle(&excelize.Style{
+		NumFmt: 4,
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 12,
+		},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#E2EFDA"},
+			Pattern: 1,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "right",
+		},
+	})
+	f.SetCellStyle(sheetName, fmt.Sprintf("%s%d", lastCol, totalAmountRow), fmt.Sprintf("%s%d", lastCol, totalAmountRow), totalAmountStyle)
+
+	// 设置列宽
+	f.SetColWidth(sheetName, "A", "A", 12) // 日期列
 	for _, product := range products {
 		for i := productCols[product]; i <= productEndCols[product]; i++ {
 			colLetter := execl.GetColumnLetter(i)
-			f.SetColWidth(sheetName, colLetter, colLetter, 10)
+			f.SetColWidth(sheetName, colLetter, colLetter, 12)
 		}
 	}
 
 	// 添加边框
-	lastCol := execl.GetColumnLetter(col - 1)
-	f.SetCellStyle(sheetName, "A1", lastCol+strconv.Itoa(totalRow), styles["border"])
-
-	// 添加自动筛选
-	//f.AutoFilter(sheetName, "A1", lastCol+"2", "")
-
-	//// 创建样式
-	//// 应用样式到单元格
-	//f.SetCellStyle(sheetName, "A1", "A8", styles["dateHeader"])
-	//f.SetCellStyle(sheetName, "B2", "D2", styles["specHeader"])
-	//f.SetCellStyle(sheetName, "B3", "N8", styles["data"])
+	f.SetCellStyle(sheetName, "A1", lastCol+strconv.Itoa(totalAmountRow), styles["border"])
 
 	return f.SaveAs(filename)
 }

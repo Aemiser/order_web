@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Box, FileText, Layers, Settings, LogOut } from 'lucide-vue-next';
+import { Box, FileText, Layers, Calculator, Settings, LogOut } from 'lucide-vue-next';
 
 defineProps<{
   activeTab: string;
@@ -38,13 +38,21 @@ defineEmits<{
           <Layers class="w-5 h-5" />
           <span class="font-medium">订单详情</span>
         </button>
+        <button 
+          @click="$emit('update:activeTab', 'checkout')"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left"
+          :class="activeTab === 'checkout' ? 'bg-blue-600/10 text-blue-500 border-r-[3px] border-blue-500' : 'text-slate-400 hover:text-white hover:bg-white/5'"
+        >
+          <Calculator class="w-5 h-5" />
+          <span class="font-medium">账单结算</span>
+        </button>
 <!--        <button -->
 <!--          @click="$emit('update:activeTab', 'settings')"-->
 <!--          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left"-->
-<!--          :class="activeTab === 'settings' ? 'bg-blue-600/10 text-blue-500 border-r-[3px] border-blue-500' : 'text-slate-400 hover:text-white hover:bg-white/5'"-->
+<!--          :class="activeTab === 'settings' ? 'bg-blue-600/10 text-blue-500 border-r-[3px] border-blue-500' : 'text-slate-400 hover:text-white hover:bg-white/5'"
 <!--        >-->
-<!--          <Settings class="w-5 h-5" />-->
-<!--          <span class="font-medium">应用设置</span>-->
+<!--          <Settings class="w-5 h-5" />
+<!--          <span class="font-medium">应用设置</span>
 <!--        </button>-->
       </nav>
     </div>

@@ -82,3 +82,32 @@ func FormatDate(t time.Time) string {
 func FormatShortDate(t time.Time) string {
 	return t.Format("01-02")
 }
+
+// 从规格字符串中提取斤数
+func ExtractJinCount(spec string) float64 {
+	re := regexp.MustCompile(`\d+`)
+	numStr := re.FindString(spec)
+	num, _ := strconv.ParseFloat(numStr, 64)
+	return num
+}
+
+// 计算每件价格
+func CalculatePricePerItem(spec string, pricePerKg float64, pricePerItem float64) float64 {
+	// 如果直接提供了每件价格，优先使用
+	if pricePerItem > 0 {
+		return pricePerItem
+	}
+
+	// 如果提供了每斤价格，计算每件价格 = 斤数 * 每斤价格
+	if pricePerKg > 0 {
+		jinCount := ExtractJinCount(spec)
+		return jinCount * pricePerKg
+	}
+
+	return 0
+}
+
+// 计算金额
+func CalculateAmount(quantity int, pricePerItem float64) float64 {
+	return float64(quantity) * pricePerItem
+}

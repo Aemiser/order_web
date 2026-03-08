@@ -57,3 +57,30 @@ func SetVid(infolist []models.AddressInfo) []models.AddressInfo {
 	}
 	return infolist
 }
+
+// 检查是否存在新字段
+func Specchecking(list []models.AddressInfo) (newSpecList []string) {
+	newSpecMap := make(map[string]int, 0)
+	SpecMap := make(map[string]int, 0)
+	// 把map拉长为一维
+	for k, v := range global.ProductBelongMap {
+		SpecMap[k] = 1
+		for _, vv := range v {
+			SpecMap[vv] = 1
+		}
+	}
+
+	for _, info := range list {
+		for _, spec := range info.ProductSpecs {
+			if _, ok := SpecMap[spec.Name]; !ok {
+				newSpecMap[spec.Name] = 1
+			}
+		}
+	}
+	// map转一维切片
+	for k, _ := range newSpecMap {
+		newSpecList = append(newSpecList, k)
+	}
+	fmt.Println("检查到新商品：", newSpecList)
+	return
+}

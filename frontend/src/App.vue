@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Info, Download } from 'lucide-vue-next';
+import { Info, Download, RotateCw, SlidersHorizontal, Wallet } from 'lucide-vue-next';
 import * as XLSX from 'xlsx';
 
 import Sidebar from './components/Sidebar/Sidebar.vue';
 import demo from './components/demo.vue';
 import Header from './components/Header/Header.vue';
+import FieldDialog from './components/Main/Dialog/Field.vue';
 import OrderInputView from './components/Main/OrderInputView.vue';
 import OrderDetailsView from './components/Main/OrderDetailsView.vue';
 import AppSettingsView from './components/Main/AppSettingsView.vue';
+import CheckoutView from './components/Main/Checkout/CheckoutView.vue';
 import { OrderRecognition, GetpreviewData, DeletepreviewData, CreateOrder } from '../wailsjs/go/main/App';
 import type { Order } from './types';
 
@@ -21,6 +23,7 @@ const isAnalyzing = ref(false);
 const isSystemReady = ref(true);
 const statusMessage = ref('系统已就绪 (后端模式)');
 const showConfirmModal = ref(false);
+const showFieldDialog = ref(false);
 
 // --- Logic ---
 const analyzeOrders = async (isAppend: boolean = false) => {
@@ -174,6 +177,11 @@ const handleCancel = () => {
   showConfirmModal.value = false;
 };
 
+// 处理字段配置
+const handleConfig = () => {
+  showFieldDialog.value = true;
+};
+
 </script>
 
 <template>
@@ -210,11 +218,16 @@ const handleCancel = () => {
           :activeTab="activeTab"
         />
 
+        <CheckoutView
+          v-if="activeTab === 'checkout'"
+        />
+
         <AppSettingsView
           v-if="activeTab === 'settings'"
         />
 
-<!--        <demo />-->
+       <!-- <demo />
+        <Fidld /> -->
       </div>
 
       <!-- Bottom Action Bar (Only show for Input view) -->
@@ -242,6 +255,42 @@ const handleCancel = () => {
         </div>
       </footer>
 
+      <!-- Bottom Action Bar (Only show for Checkout view) -->
+      <footer 
+        v-if="activeTab === 'checkout'"
+        class="h-20 bg-[#16191E] border-t border-white/5 px-8 flex items-center justify-between shrink-0"
+      >
+        <div class="flex items-center gap-4 text-xs text-slate-500">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+            <span>已选定 8 天数据</span>
+          </div>
+          <div class="w-px h-4 bg-white/10"></div>
+          <p>总成交品种: <span class="text-white font-bold">14项</span></p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button 
+            class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+          >
+            <RotateCw class="w-4 h-4" />
+            <span class="text-xs font-bold">刷新数据</span>
+          </button>
+          <button 
+            @click="handleConfig"
+            class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+          >
+            <SlidersHorizontal class="w-4 h-4" />
+            <span class="text-xs font-bold">字段配置</span>
+          </button>
+          <button 
+            class="h-10 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+          >
+            <Wallet class="w-4 h-4" />
+            <span class="text-xs">结算账单</span>
+          </button>
+        </div>
+      </footer>
+
       <!-- Confirmation Modal -->
       <div v-if="showConfirmModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300">
         <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
@@ -257,6 +306,15 @@ const handleCancel = () => {
           </div>
         </div>
       </div>
+
+      <!-- Field Configuration Dialog -->
+      <FieldDialog 
+        v-if="showFieldDialog" 
+        :show="showFieldDialog" 
+        :fieldList="[]"
+        :pbMap="{}"
+        @close="showFieldDialog = false" 
+      />
     </main>
   </div>
 </template>

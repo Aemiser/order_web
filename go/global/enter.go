@@ -12,7 +12,8 @@ const (
 )
 
 var (
-	Config      *conf.Config
-	Db          *gorm.DB
-	AddressList []models.AddressInfo
+	Config           *conf.Config
+	Db               *gorm.DB
+	AddressList      []models.AddressInfo
+	ProductBelongMap = map[string][]string{}
 )

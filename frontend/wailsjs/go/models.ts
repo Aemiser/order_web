@@ -1,3 +1,62 @@
+export namespace checkout {
+	
+	export class ProSPecs {
+	    SID: number;
+	    Name: string;
+	    Specs: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ProSPecs(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.SID = source["SID"];
+	        this.Name = source["Name"];
+	        this.Specs = source["Specs"];
+	    }
+	}
+	export class CheckoutResponse {
+	    FieldList: string[];
+	    Count: number;
+	    ProSPecs: ProSPecs[];
+	    TableData: string[];
+	    PBMap: Record<string, Array<string>>;
+	
+	    static createFrom(source: any = {}) {
+	        return new CheckoutResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.FieldList = source["FieldList"];
+	        this.Count = source["Count"];
+	        this.ProSPecs = this.convertValues(source["ProSPecs"], ProSPecs);
+	        this.TableData = source["TableData"];
+	        this.PBMap = source["PBMap"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace conf {
 	
 	export class Deepseek {
@@ -84,10 +143,8 @@ export namespace models {
 	}
 	export class AddressInfo {
 	    id: number;
-	    // Go type: time
-	    createdAt: any;
-	    // Go type: time
-	    updatedAt: any;
+	    createdAt: time.Time;
+	    updatedAt: time.Time;
 	    // Go type: gorm
 	    deletedAt: any;
 	    VID: number;
@@ -105,8 +162,8 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
-	        this.createdAt = this.convertValues(source["createdAt"], null);
-	        this.updatedAt = this.convertValues(source["updatedAt"], null);
+	        this.createdAt = this.convertValues(source["createdAt"], time.Time);
+	        this.updatedAt = this.convertValues(source["updatedAt"], time.Time);
 	        this.deletedAt = this.convertValues(source["deletedAt"], null);
 	        this.VID = source["VID"];
 	        this["收件人"] = source["收件人"];
@@ -146,10 +203,8 @@ export namespace order {
 	    key: string;
 	    order: string;
 	    Addresssinfo: models.AddressInfo;
-	    // Go type: time
-	    startTime: any;
-	    // Go type: time
-	    endTime: any;
+	    startTime: time.Time;
+	    endTime: time.Time;
 	
 	    static createFrom(source: any = {}) {
 	        return new OrderQueryRequest(source);
@@ -162,8 +217,8 @@ export namespace order {
 	        this.key = source["key"];
 	        this.order = source["order"];
 	        this.Addresssinfo = this.convertValues(source["Addresssinfo"], models.AddressInfo);
-	        this.startTime = this.convertValues(source["startTime"], null);
-	        this.endTime = this.convertValues(source["endTime"], null);
+	        this.startTime = this.convertValues(source["startTime"], time.Time);
+	        this.endTime = this.convertValues(source["endTime"], time.Time);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -222,8 +277,7 @@ export namespace order {
 export namespace ordertutil {
 	
 	export class ExceladdressInfo {
-	    // Go type: time
-	    createdAt: any;
+	    createdAt: time.Time;
 	    VID: number;
 	    "收件人": string;
 	    "手机号": string;
@@ -237,7 +291,7 @@ export namespace ordertutil {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.createdAt = this.convertValues(source["createdAt"], null);
+	        this.createdAt = this.convertValues(source["createdAt"], time.Time);
 	        this.VID = source["VID"];
 	        this["收件人"] = source["收件人"];
 	        this["手机号"] = source["手机号"];
@@ -263,6 +317,23 @@ export namespace ordertutil {
 		    }
 		    return a;
 		}
+	}
+
+}
+
+export namespace time {
+	
+	export class Time {
+	
+	
+	    static createFrom(source: any = {}) {
+	        return new Time(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	
+	    }
 	}
 
 }

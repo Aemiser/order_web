@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"order_server/go/global"
 	"order_server/go/models/enum"
+	"order_server/go/server/checkout"
 	"order_server/go/server/config"
 	alog "order_server/go/server/log"
 	"order_server/go/server/order"
 	ordertutil "order_server/go/utils/order"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -108,4 +110,14 @@ func (a *App) SaveToExcel() string {
 	runtime.BrowserOpenURL(a.ctx, folderPath)
 
 	return "导出成功"
+}
+
+// 获取账单的查询数据
+func (a *App) GetChackDaydata(statime time.Time, endtime time.Time) checkout.CheckoutResponse {
+	return checkout.GetDaydata(statime, endtime)
+}
+
+// 修改商品归属
+func (a *App) SetProductBelong(productBelongMap map[string][]string) {
+	checkout.SetFieldList(productBelongMap)
 }

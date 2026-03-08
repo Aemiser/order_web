@@ -21,6 +21,7 @@ func main() {
 	global.Config = core.ReadConf()
 	core.InitLogrus()
 	global.Db = core.InitDB()
+	global.ProductBelongMap = core.ReadProductBelongMap()
 	flags.Run()
 	// Create application with options
 	err := wails.Run(&options.App{

@@ -1,452 +1,341 @@
 <template>
-  <div class="multi-dim-table-demo">
-    <h1>Vue 多维表格示例</h1>
-
-    <!-- 示例1: 多维表头（合并单元格） -->
-    <section class="demo-section">
-      <h2>📊 示例1: 多维表头（季度/月度销售报表）</h2>
-      <div class="table-container">
-        <table class="multi-header-table">
-          <!-- 第一层表头：产品 + 各季度 -->
-          <thead>
-          <tr>
-            <th :rowspan="2" class="product-col">产品名称</th>
-            <th :colspan="3" class="quarter">2024年第一季度</th>
-            <th :colspan="3" class="quarter">2024年第二季度</th>
-            <th :rowspan="2" class="total-col">总计</th>
+  <div class="table-card">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr class="product-group">
+            <th>日期 / 产品</th>
+            <th colspan="2">香水柠檬</th>
+            <th colspan="2">广香一级</th>
+            <th colspan="2">广香二级</th>
+            <th colspan="2">黄柠檬</th>
+            <th colspan="2">金桔</th>
           </tr>
-          <!-- 第二层表头：各月份 -->
-          <tr>
-            <th>1月</th>
-            <th>2月</th>
-            <th>3月</th>
-            <th>4月</th>
-            <th>5月</th>
-            <th>6月</th>
+          <tr class="spec-header">
+            <th></th>
+            <th>5斤</th>
+            <th>8斤</th>
+            <th>10斤</th>
+            <th>20斤</th>
+            <th>7斤</th>
+            <th>15斤</th>
+            <th>3斤</th>
+            <th>6斤</th>
+            <th>2斤</th>
+            <th>4斤</th>
           </tr>
-          </thead>
-          <tbody>
-          <tr v-for="(item, index) in salesData" :key="index">
-            <td class="product-name">{{ item.product }}</td>
-            <td>{{ item.jan }}</td>
-            <td>{{ item.feb }}</td>
-            <td>{{ item.mar }}</td>
-            <td>{{ item.apr }}</td>
-            <td>{{ item.may }}</td>
-            <td>{{ item.jun }}</td>
-            <td class="total">{{ item.total }}</td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 示例2: 数据透视效果（多维分组汇总） -->
-    <section class="demo-section">
-      <h2>📈 示例2: 多维数据透视（按区域+产品类别汇总）</h2>
-
-      <!-- 控制面板 -->
-      <div class="control-panel">
-        <div class="filter-group">
-          <label>行维度：</label>
-          <select v-model="rowDimension">
-            <option value="region">销售区域</option>
-            <option value="category">产品类别</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>列维度：</label>
-          <select v-model="colDimension">
-            <option value="category">产品类别</option>
-            <option value="region">销售区域</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>汇总方式：</label>
-          <select v-model="aggregateType">
-            <option value="sum">求和</option>
-            <option value="avg">平均值</option>
-            <option value="count">计数</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- 透视表展示 -->
-      <div class="table-container" v-if="pivotData.length">
-        <table class="pivot-table">
-          <thead>
-          <tr>
-            <th>{{ rowDimension === 'region' ? '销售区域' : '产品类别' }}</th>
-            <th v-for="col in pivotColumns" :key="col">
-              {{ col }}
-            </th>
-            <th>总计</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="row in pivotData" :key="row.name">
-            <td class="row-header">{{ row.name }}</td>
-            <td v-for="col in pivotColumns" :key="col"
-                :class="{ 'highlight': row[col] > 10000 }">
-              {{ formatValue(row[col]) }}
+        </thead>
+        <tbody>
+          <!-- 使用v-for动态渲染数据行 -->
+          <tr v-for="(row, index) in tableData" :key="index" class="data-row">
+            <td class="date-column">{{ row.date }}</td>
+            <td v-for="(value, idx) in row.values" :key="idx" class="spec-cell">
+              <template v-if="value !== '—'">
+                <span class="spec-value">{{ value }}</span>
+                <span class="spec-unit">件</span>
+              </template>
+              <template v-else>
+                <span class="empty-cell">—</span>
+              </template>
             </td>
-            <td class="total">{{ formatValue(row.total) }}</td>
           </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
 
-    <!-- 示例3: 树形表格（多层次数据） -->
-    <section class="demo-section">
-      <h2>🌲 示例3: 树形多维表格（产品分类层级）</h2>
-      <div class="table-container">
-        <table class="tree-table">
-          <thead>
-          <tr>
-            <th>产品分类</th>
-            <th>一季度销量</th>
-            <th>二季度销量</th>
-            <th>同比增长</th>
+          <!-- 总计行 -->
+          <tr class="total-row">
+            <td class="total-label">总计 (件)</td>
+            <td>447</td>
+            <td>31</td>
+            <td>168</td>
+            <td>168</td>
+            <td>1.6</td>
+            <td>—</td>
+            <td>34</td>
+            <td>4.4</td>
+            <td>168</td>
+            <td>1.6</td>
           </tr>
-          </thead>
-          <tbody>
-          <template v-for="item in treeData" :key="item.name">
-            <!-- 一级分类 -->
-            <tr class="level-0">
-              <td>
-                  <span class="expand-icon" @click="toggleExpand(item)">
-                    {{ item.expanded ? '▼' : '▶' }}
-                  </span>
-                {{ item.name }}
-              </td>
-              <td>{{ item.q1 }}</td>
-              <td>{{ item.q2 }}</td>
-              <td :class="{ 'positive': item.growth > 0, 'negative': item.growth < 0 }">
-                {{ item.growth }}%
-              </td>
-            </tr>
-            <!-- 二级分类（子项） -->
-            <tr v-for="child in item.children"
-                v-show="item.expanded"
-                :key="child.name"
-                class="level-1">
-              <td>└─ {{ child.name }}</td>
-              <td>{{ child.q1 }}</td>
-              <td>{{ child.q2 }}</td>
-              <td :class="{ 'positive': child.growth > 0, 'negative': child.growth < 0 }">
-                {{ child.growth }}%
-              </td>
-            </tr>
-          </template>
-          </tbody>
-        </table>
+
+          <!-- 单价行 -->
+          <tr class="price-row">
+            <td class="price-label">单价 (元/件)</td>
+            <td>34</td>
+            <td>40.8</td>
+            <td>54.4</td>
+            <td>16</td>
+            <td>8</td>
+            <td>—</td>
+            <td>16</td>
+            <td>8</td>
+            <td>16</td>
+            <td>8</td>
+          </tr>
+
+          <!-- 总金额行 -->
+          <tr class="amount-row">
+            <td class="amount-label">总金额 (元)</td>
+            <td>15198</td>
+            <td>122.4</td>
+            <td>54.4</td>
+            <td>25168</td>
+            <td>1.6</td>
+            <td>—</td>
+            <td>544</td>
+            <td>35.2</td>
+            <td>2688</td>
+            <td>12.8</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 底部说明 -->
+    <div class="legend-section">
+      <div class="legend-item">
+        <span class="legend-color" style="background: rgba(59, 130, 246, 0.2);"></span>
+        <span>香水柠檬: 5斤装(34元/件) · 8斤装(40.8元/件)</span>
       </div>
-    </section>
+      <div class="legend-item">
+        <span class="legend-color" style="background: rgba(20, 184, 166, 0.2);"></span>
+        <span>广香一级: 10斤装(54.4元/件) · 20斤装(16元/件)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color" style="background: rgba(139, 92, 246, 0.2);"></span>
+        <span>金桔: 2斤装(16元/件) · 4斤装(8元/件)</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
-// 示例1: 销售数据
-const salesData = ref([
-  { product: '笔记本电脑', jan: 120, feb: 135, mar: 150, apr: 165, may: 180, jun: 210, total: 960 },
-  { product: '智能手机', jan: 230, feb: 245, mar: 260, apr: 275, may: 290, jun: 320, total: 1620 },
-  { product: '平板电脑', jan: 80, feb: 95, mar: 110, apr: 125, may: 140, jun: 155, total: 705 },
-  { product: '智能手表', jan: 45, feb: 55, mar: 65, apr: 75, may: 85, jun: 95, total: 420 }
+// 表格数据
+const tableData = ref([
+  { date: '3月8日', values: [17, 4, 11, 12, '—', '—', 5, '—', 11, '—'] },
+  { date: '3月9日', values: [11, 3, 8, 7, 2, '—', 4, 1, 8, 2] },
+  { date: '3月10日', values: [30, 3, 11, 11, 2, '—', 4, '—', 12, '—'] },
+  { date: '3月11日', values: [24, 7, 7, 11, 8, '—', 5, 1, 11, '—'] },
+  { date: '3月12日', values: [17, 0, 9, 11, 2, '—', 3, '—', 12, 3] },
+  { date: '3月13日', values: [7, 8, 5, 11, '—', 2, 4, '—', 8, '—'] },
+  { date: '3月14日', values: [18, 1, 11, 11, '—', '—', 1, '—', 11, 1] },
+  { date: '3月15日', values: [21, 1, 11, 11, '—', '—', 1, '—', 11, '—'] },
+  { date: '3月16日', values: [23, 1, 11, 11, '—', '—', 1, '—', 11, '—'] },
+  { date: '3月17日', values: [17, 1, 11, 11, '—', '—', 1, '—', 11, '—'] },
+  { date: '3月18日', values: [20, 0, 3, 7, 1, 1, '—', '—', 11, '—'] }
 ])
-
-// 示例2: 原始数据（用于透视）
-const sourceData = ref([
-  { region: '华北', category: '电子产品', sales: 12500 },
-  { region: '华北', category: '电子产品', sales: 8300 },
-  { region: '华北', category: '服装', sales: 4200 },
-  { region: '华北', category: '服装', sales: 3800 },
-  { region: '华东', category: '电子产品', sales: 15800 },
-  { region: '华东', category: '电子产品', sales: 9200 },
-  { region: '华东', category: '服装', sales: 5600 },
-  { region: '华东', category: '服装', sales: 4900 },
-  { region: '华南', category: '电子产品', sales: 11200 },
-  { region: '华南', category: '电子产品', sales: 7800 },
-  { region: '华南', category: '服装', sales: 6300 },
-  { region: '华南', category: '服装', sales: 5200 }
-])
-
-// 透视表配置
-const rowDimension = ref('region')
-const colDimension = ref('category')
-const aggregateType = ref('sum')
-
-// 计算透视列（去重后的类别）
-const pivotColumns = computed(() => {
-  const values = sourceData.value.map(item => item[colDimension.value])
-  return [...new Set(values)]
-})
-
-// 计算透视行（去重后的行维度值）
-const pivotRows = computed(() => {
-  const values = sourceData.value.map(item => item[rowDimension.value])
-  return [...new Set(values)]
-})
-
-// 计算透视数据
-const pivotData = computed(() => {
-  return pivotRows.value.map(rowName => {
-    const rowData = { name: rowName, total: 0 }
-
-    // 计算每个列的值
-    pivotColumns.value.forEach(colName => {
-      const filtered = sourceData.value.filter(item =>
-          item[rowDimension.value] === rowName &&
-          item[colDimension.value] === colName
-      )
-
-      let value = 0
-      if (aggregateType.value === 'sum') {
-        value = filtered.reduce((sum, item) => sum + item.sales, 0)
-      } else if (aggregateType.value === 'avg') {
-        value = filtered.length ? filtered.reduce((sum, item) => sum + item.sales, 0) / filtered.length : 0
-      } else if (aggregateType.value === 'count') {
-        value = filtered.length
-      }
-
-      rowData[colName] = value
-      rowData.total += value
-    })
-
-    return rowData
-  })
-})
-
-// 格式化数字
-const formatValue = (value) => {
-  if (typeof value !== 'number') return value
-  return new Intl.NumberFormat('zh-CN').format(Math.round(value * 100) / 100)
-}
-
-// 示例3: 树形数据
-const treeData = ref([
-  {
-    name: '消费电子产品',
-    q1: 1250,
-    q2: 1480,
-    growth: 18.4,
-    expanded: true,
-    children: [
-      { name: '智能手机', q1: 580, q2: 720, growth: 24.1 },
-      { name: '笔记本电脑', q1: 420, q2: 460, growth: 9.5 },
-      { name: '平板电脑', q1: 250, q2: 300, growth: 20.0 }
-    ]
-  },
-  {
-    name: '家用电器',
-    q1: 890,
-    q2: 950,
-    growth: 6.7,
-    expanded: false,
-    children: [
-      { name: '冰箱', q1: 320, q2: 340, growth: 6.3 },
-      { name: '洗衣机', q1: 280, q2: 310, growth: 10.7 },
-      { name: '空调', q1: 290, q2: 300, growth: 3.4 }
-    ]
-  },
-  {
-    name: '服装鞋帽',
-    q1: 670,
-    q2: 820,
-    growth: 22.4,
-    expanded: false,
-    children: [
-      { name: '男装', q1: 280, q2: 350, growth: 25.0 },
-      { name: '女装', q1: 390, q2: 470, growth: 20.5 }
-    ]
-  }
-])
-
-// 展开/折叠
-const toggleExpand = (item) => {
-  item.expanded = !item.expanded
-}
 </script>
 
 <style scoped>
-.multi-dim-table-demo {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: 'Microsoft YaHei', sans-serif;
+/* 字体导入 */
+@import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800&f[]=satoshi@400,500,700&display=swap');
+
+/* 设计变量 */
+:root {
+  --bg-primary: #0F1115;
+  --bg-card: #1E2228;
+  --accent-blue: #3B82F6;
+  --accent-teal: #14B8A6;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --border-light: rgba(255, 255, 255, 0.1);
+  --border-lighter: rgba(255, 255, 255, 0.05);
+  --row-hover: rgba(255, 255, 255, 0.02);
 }
 
-.demo-section {
-  margin-bottom: 40px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-h1 {
-  color: #2c3e50;
-  text-align: center;
-  margin-bottom: 30px;
+body {
+  background-color: var(--bg-primary);
+  font-family: 'Satoshi', sans-serif;
+  color: var(--text-primary);
 }
 
-h2 {
-  font-size: 1.2rem;
-  color: #34495e;
-  margin-bottom: 15px;
-  border-left: 4px solid #3498db;
-  padding-left: 10px;
+/* 表格卡片 */
+.table-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 24px 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  margin: 20px;
 }
 
-.table-container {
-  overflow-x: auto;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+.table-wrapper {
+  border-radius: 16px;
+  border: 1px solid var(--border-lighter);
+  overflow: auto;
+  background-color: var(--bg-card);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
-}
-
-th, td {
-  border: 1px solid #e0e0e0;
-  padding: 12px 8px;
-  text-align: center;
-  font-size: 14px;
+  min-width: 1000px;
+  font-size: 0.95rem;
 }
 
 th {
-  background: #f1f3f4;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
   font-weight: 600;
-  color: #2c3e50;
+  font-size: 0.95rem;
+  padding: 18px 12px;
+  white-space: nowrap;
+  border-bottom: 2px solid var(--border-light);
+  text-align: center;
 }
 
-.multi-header-table th {
-  background: #e8eaf6;
+.product-group th {
+  background: rgba(59, 130, 246, 0.05);
+  color: var(--accent-blue);
+  font-size: 1rem;
+  padding: 14px 8px;
 }
 
-.quarter {
-  background: #c5cae9;
-  color: #1a237e;
+.spec-header th {
+  background: rgba(255, 255, 255, 0.01);
+  color: var(--accent-teal);
 }
 
-.product-col, .product-name {
-  background: #f5f5f5;
+td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--border-lighter);
+  text-align: center;
+  vertical-align: middle;
+  color: var(--text-primary);
+}
+
+.data-row:hover td {
+  background-color: var(--row-hover);
+}
+
+.date-column {
+  background: rgba(255, 255, 255, 0.02);
+  font-weight: 600;
+  color: var(--accent-teal);
+  text-align: left;
+  padding-left: 18px;
+  font-size: 1rem;
+  border-right: 1px solid var(--border-light);
+  position: sticky;
+  left: 0;
+  background-color: var(--bg-card);
+}
+
+.spec-cell {
   font-weight: 500;
+  color: var(--text-primary);
 }
 
-.total-col, .total {
-  background: #ffecb3;
+.spec-value {
   font-weight: 600;
-  color: #bf360c;
+  color: var(--accent-blue);
+  font-size: 1.1rem;
 }
 
-/* 控制面板样式 */
-.control-panel {
+.spec-unit {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: 2px;
+  font-weight: 400;
+}
+
+.empty-cell {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* 总计行 */
+.total-row {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.total-row td {
+  background: rgba(59, 130, 246, 0.05);
+  border-top: 2px solid var(--border-light);
+  border-bottom: 2px solid var(--border-light);
+  font-weight: 600;
+  color: var(--accent-blue);
+}
+
+.total-label {
+  background: rgba(59, 130, 246, 0.1);
+  font-weight: 700;
+  color: var(--accent-blue);
+  text-align: left;
+  padding-left: 18px;
+}
+
+/* 单价行 */
+.price-row {
+  background: rgba(20, 184, 166, 0.03);
+}
+
+.price-row td {
+  background: rgba(20, 184, 166, 0.03);
+  color: var(--accent-teal);
+  border-bottom: 1px dashed var(--border-light);
+}
+
+.price-label {
+  font-weight: 600;
+  color: var(--accent-teal);
+  text-align: left;
+  padding-left: 18px;
+}
+
+/* 总金额行 */
+.amount-row {
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.amount-row td {
+  background: rgba(139, 92, 246, 0.05);
+  border-top: 2px solid var(--border-light);
+  font-weight: 600;
+  color: #A78BFA;
+}
+
+.amount-label {
+  font-weight: 700;
+  color: #A78BFA;
+  text-align: left;
+  padding-left: 18px;
+}
+
+/* 底部图例 */
+.legend-section {
+  margin-top: 20px;
+  padding: 0 12px;
   display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
-  padding: 15px;
-  background: white;
-  border-radius: 6px;
+  gap: 24px;
   flex-wrap: wrap;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
-.filter-group {
+.legend-item {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.filter-group label {
-  font-weight: 500;
-  color: #555;
-}
-
-.filter-group select {
-  padding: 6px 12px;
-  border: 1px solid #ddd;
+.legend-color {
+  width: 10px;
+  height: 10px;
   border-radius: 4px;
-  background: white;
-  cursor: pointer;
 }
 
-.filter-group select:hover {
-  border-color: #3498db;
-}
-
-/* 透视表样式 */
-.pivot-table th {
-  background: #e0f2f1;
-  color: #00695c;
-}
-
-.pivot-table .row-header {
-  background: #f5f5f5;
-  font-weight: 500;
-  text-align: left;
-  padding-left: 15px;
-}
-
-.pivot-table td.highlight {
-  background: #fff9c4;
-  font-weight: 600;
-  color: #f57c00;
-}
-
-/* 树形表格样式 */
-.tree-table .level-0 {
-  background: #f3e5f5;
-  font-weight: 600;
-}
-
-.tree-table .level-1 {
-  background: #fafafa;
-  color: #555;
-}
-
-.tree-table .level-1 td:first-child {
-  padding-left: 35px;
-}
-
-.expand-icon {
-  display: inline-block;
-  width: 20px;
-  cursor: pointer;
-  color: #7b1fa2;
-  user-select: none;
-  margin-right: 5px;
-}
-
-.positive {
-  color: #27ae60;
-  font-weight: 600;
-}
-
-.negative {
-  color: #c0392b;
-  font-weight: 600;
-}
-
-/* 响应式调整 */
+/* 响应式 */
 @media (max-width: 768px) {
-  .demo-section {
-    padding: 15px;
-  }
-
-  th, td {
-    padding: 8px 4px;
-    font-size: 12px;
-  }
-
-  .control-panel {
-    flex-direction: column;
-    gap: 10px;
+  .table-card {
+    margin: 10px;
+    padding: 16px 12px;
   }
 }
 </style>
