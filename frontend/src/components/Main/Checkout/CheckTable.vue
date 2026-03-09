@@ -5,14 +5,14 @@
         <thead>
           <tr class="product-group">
             <th>日期 / 产品</th>
-            <th v-for="product in products" :key="product.name" :colspan="product.specs.length">
+            <th v-for="product in products" :key="product.name" :colspan="product.specs.length" :style="{ color: getProductColor(product.name) }">
               {{ product.name }}
             </th>
           </tr>
           <tr class="spec-header">
             <th></th>
             <template v-for="product in products" :key="product.name">
-              <th v-for="spec in product.specs" :key="`${product.name}-${spec.name || spec}`">
+              <th v-for="spec in product.specs" :key="`${product.name}-${spec.name || spec}`" :style="{ color: getProductColor(product.name) }">
                 {{ spec.name || spec }}
               </th>
             </template>
@@ -23,7 +23,7 @@
           <tr v-for="(row, index) in tableData" :key="index" class="data-row">
             <td class="date-column">{{ row.date }}</td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`${productIndex}-${specIndex}`" class="spec-cell">
+              <td v-for="(spec, specIndex) in product.specs" :key="`${productIndex}-${specIndex}`" class="spec-cell" :style="{ color: getProductColor(product.name) }">
                 <template v-if="row.values && row.values[getSpecIndex(productIndex, specIndex)] !== '—'">
                   <span class="spec-value">{{ row.values[getSpecIndex(productIndex, specIndex)] }}</span>
                 </template>
@@ -38,7 +38,7 @@
           <tr class="total-row">
             <td class="total-label">总计 (件)</td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`total-${productIndex}-${specIndex}`">
+              <td v-for="(spec, specIndex) in product.specs" :key="`total-${productIndex}-${specIndex}`" :style="{ color: getProductColor(product.name) }">
                 {{ totalRow[getSpecIndex(productIndex, specIndex)] }}
               </td>
             </template>
@@ -85,13 +85,14 @@
               </template>
             </td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`kg-${productIndex}-${specIndex}`">
+              <td v-for="(spec, specIndex) in product.specs" :key="`kg-${productIndex}-${specIndex}`" :style="{ color: getProductColor(product.name) }">
                 <template v-if="isEditMode">
                   <input 
                     type="text" 
                     :value="editPricePerKg[getSpecIndex(productIndex, specIndex)] || ''"
                     @input="handlePricePerKgChange(getSpecIndex(productIndex, specIndex), ($event.target as HTMLInputElement).value)"
-                    class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
+                    :style="{ color: getProductColor(product.name), borderColor: getProductColor(product.name) + '40' }"
+                    class="w-full bg-white/5 border rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
                     placeholder="0.00"
                   />
                 </template>
@@ -106,13 +107,14 @@
           <tr class="price-row">
             <td class="price-label">元/件</td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`price-${productIndex}-${specIndex}`">
+              <td v-for="(spec, specIndex) in product.specs" :key="`price-${productIndex}-${specIndex}`" :style="{ color: getProductColor(product.name) }">
                 <template v-if="isEditMode">
                   <input 
                     type="text" 
                     :value="editPrices[getSpecIndex(productIndex, specIndex)] || ''"
                     @input="handlePriceChange(getSpecIndex(productIndex, specIndex), ($event.target as HTMLInputElement).value)"
-                    class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
+                    :style="{ color: getProductColor(product.name), borderColor: getProductColor(product.name) + '40' }"
+                    class="w-full bg-white/5 border rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
                     placeholder="0.00"
                   />
                 </template>
@@ -127,7 +129,7 @@
           <tr class="amount-row">
             <td class="amount-label">总金额 (元)</td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`amount-${productIndex}-${specIndex}`">
+              <td v-for="(spec, specIndex) in product.specs" :key="`amount-${productIndex}-${specIndex}`" :style="{ color: getProductColor(product.name) }">
                 {{ totalAmountRow[getSpecIndex(productIndex, specIndex)] }}
               </td>
             </template>
@@ -168,6 +170,38 @@ interface Product {
   name: string;
   specs: string[];
 }
+
+// 预设颜色库
+const colorPalette = [
+  '#3B82F6', // 蓝色
+  '#10B981', // 绿色
+  '#F59E0B', // 橙色
+  '#8B5CF6', // 紫色
+  '#EC4899', // 粉色
+  '#14B8A6', // 青绿色
+  '#F43F5E', // 红色
+  '#6366F1', // 靛蓝色
+  '#06B6D4', // 青色
+  '#F97316'  // 深橙色
+];
+
+// 根据商品名称生成哈希值
+const getProductHash = (productName: string): number => {
+  let hash = 0;
+  for (let i = 0; i < productName.length; i++) {
+    const char = productName.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // 转换为32位整数
+  }
+  return Math.abs(hash);
+};
+
+// 获取商品对应的颜色
+const getProductColor = (productName: string): string => {
+  const hash = getProductHash(productName);
+  const index = hash % colorPalette.length;
+  return colorPalette[index];
+};
 
 // 商品列表
 const products = ref<Product[]>([
