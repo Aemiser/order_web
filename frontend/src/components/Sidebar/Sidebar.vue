@@ -64,10 +64,10 @@ defineEmits<{
           <span class="text-sm text-slate-300">{{ statusMessage }}</span>
         </div>
       </div>
-      <div class="flex items-center gap-3 px-4 py-2 opacity-60 hover:opacity-100 cursor-pointer transition-opacity">
+      <!-- <div class="flex items-center gap-3 px-4 py-2 opacity-60 hover:opacity-100 cursor-pointer transition-opacity">
         <LogOut class="w-4 h-4" />
         <span class="text-sm">退出登录</span>
-      </div>
+      </div> -->
     </div>
   </aside>
 </template>

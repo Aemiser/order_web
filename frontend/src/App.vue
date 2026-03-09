@@ -30,6 +30,19 @@ const checkoutResponse = ref<any>(null);
 const isLoading = ref(false);
 const proPriceRequests = ref<any[]>([]);
 const hasCheckoutData = ref(true); // 用于跟踪结账表格是否有数据
+const selectedDateRange = ref<{start: string, end: string}>({
+  start: '2026-03-01',
+  end: '2026-03-31'
+});
+
+// 字段数据
+const fieldData = ref<{
+  fieldList: string[];
+  pbMap: Record<string, string[]>
+}>({
+  fieldList: [],
+  pbMap: {}
+});
 
 // --- Logic ---
 const analyzeOrders = async (isAppend: boolean = false) => {
@@ -158,6 +171,22 @@ const refreshData = async () => {
 const totalOrders = computed(() => orders.value.length);
 const estimatedSize = computed(() => (orders.value.length * 4.1).toFixed(1));
 
+// 计算选中的天数
+const selectedDays = computed(() => {
+  if (!selectedDateRange.value.start || !selectedDateRange.value.end) return 0;
+  
+  const startDate = new Date(selectedDateRange.value.start);
+  const endDate = new Date(selectedDateRange.value.end);
+  
+  // 计算时间差（毫秒）
+  const timeDiff = endDate.getTime() - startDate.getTime();
+  
+  // 转换为天数并取整
+  const days = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 因为包含开始和结束日期
+  
+  return days;
+});
+
 const createOrder = () => {
   // 显示确认模态弹窗
   showConfirmModal.value = true;
@@ -185,7 +214,31 @@ const handleCancel = () => {
 
 // 处理字段配置
 const handleConfig = () => {
+  // 检查是否有字段数据
+  if (fieldData.value.fieldList.length === 0 && Object.keys(fieldData.value.pbMap).length === 0) {
+    // 如果没有字段数据，显示提示
+    alert('请先执行查询以获取字段数据');
+    return;
+  }
   showFieldDialog.value = true;
+};
+
+// 处理保存字段配置
+const handleSaveFieldConfig = (fieldMap: Record<string, string[]>) => {
+  console.log('保存字段配置:', fieldMap);
+  
+  try {
+    // 调用后端 SetProductBelong 函数
+    window['go']['main']['App']['SetProductBelong'](fieldMap);
+    console.log('字段配置保存成功');
+    statusMessage.value = '字段配置保存成功';
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+  } catch (error) {
+    console.error('保存字段配置失败:', error);
+    alert('保存字段配置失败，请稍后重试');
+  }
+  
+  showFieldDialog.value = false;
 };
 
 // 处理进入编辑模式
@@ -333,6 +386,21 @@ const handleCheckout = async () => {
   }
 };
 
+// 处理日期范围变化
+const handleDateRangeChange = (dateRange: {start: string, end: string}) => {
+  selectedDateRange.value = dateRange;
+  console.log('日期范围已更新:', dateRange);
+};
+
+// 处理字段数据更新
+const handleUpdateFieldData = (data: {
+  fieldList: string[];
+  pbMap: Record<string, string[]>;
+}) => {
+  fieldData.value = data;
+  console.log('字段数据已更新:', data);
+};
+
 
 
 </script>
@@ -381,6 +449,8 @@ const handleCheckout = async () => {
           @exit-edit-mode="handleExitEditMode"
           @clear-prices="handleClearPrices"
           @data-status="handleCheckoutDataStatus"
+          @date-range-change="handleDateRangeChange"
+          @update-field-data="handleUpdateFieldData"
         />
 
         <AppSettingsView
@@ -424,7 +494,7 @@ const handleCheckout = async () => {
         <div class="flex items-center gap-4 text-xs text-slate-500">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-            <span>已选定 8 天数据</span>
+            <span>已选定 {{ selectedDays }} 天数据</span>
           </div>
           <div class="w-px h-4 bg-white/10"></div>
           <p>总成交品种: <span class="text-white font-bold">14项</span></p>
@@ -513,9 +583,10 @@ const handleCheckout = async () => {
       <FieldDialog 
         v-if="showFieldDialog" 
         :show="showFieldDialog" 
-        :fieldList="[]"
-        :pbMap="{}"
+        :fieldList="fieldData.fieldList"
+        :pbMap="fieldData.pbMap"
         @close="showFieldDialog = false" 
+        @save="handleSaveFieldConfig"
       />
       
 
