@@ -84,3 +84,22 @@ func Specchecking(list []models.AddressInfo) (newSpecList []string) {
 	fmt.Println("检查到新商品：", newSpecList)
 	return
 }
+
+func GetNumberInSpec(s string) int {
+	// 创建一个正则表达式模式
+	re := regexp.MustCompile(`\d+`)
+
+	// 使用正则表达式模式匹配字符串
+	matches := re.FindString(s)
+
+	// 检查匹配结果
+	if len(matches) > 0 {
+		// 获取匹配到的第一个数字
+		num, err := strconv.Atoi(matches)
+		if err != nil {
+			return 0
+		}
+		return num
+	}
+	return 0
+}

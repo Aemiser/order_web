@@ -1,9 +1,27 @@
 export namespace checkout {
 	
+	export class Spec {
+	    name: string;
+	    pricePerKg: number;
+	    pricePerItem: number;
+	    total: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Spec(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.pricePerKg = source["pricePerKg"];
+	        this.pricePerItem = source["pricePerItem"];
+	        this.total = source["total"];
+	    }
+	}
 	export class ProSPecs {
 	    SID: number;
 	    Name: string;
-	    Specs: string[];
+	    Specs: Spec[];
 	
 	    static createFrom(source: any = {}) {
 	        return new ProSPecs(source);
@@ -13,27 +31,7 @@ export namespace checkout {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.SID = source["SID"];
 	        this.Name = source["Name"];
-	        this.Specs = source["Specs"];
-	    }
-	}
-	export class CheckoutResponse {
-	    FieldList: string[];
-	    Count: number;
-	    ProSPecs: ProSPecs[];
-	    TableData: string[];
-	    PBMap: Record<string, Array<string>>;
-	
-	    static createFrom(source: any = {}) {
-	        return new CheckoutResponse(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.FieldList = source["FieldList"];
-	        this.Count = source["Count"];
-	        this.ProSPecs = this.convertValues(source["ProSPecs"], ProSPecs);
-	        this.TableData = source["TableData"];
-	        this.PBMap = source["PBMap"];
+	        this.Specs = this.convertValues(source["Specs"], Spec);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -54,6 +52,75 @@ export namespace checkout {
 		    return a;
 		}
 	}
+	export class CheckoutResponse {
+	    FieldList: string[];
+	    PBMap: Record<string, Array<string>>;
+	    Count: number;
+	    ProSPecs: ProSPecs[];
+	    TableData: string[];
+	    TotalRow: number[];
+	    PricePerKgRow: number[];
+	    PricePerItemRow: number[];
+	    TotalAmountRow: number[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CheckoutResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.FieldList = source["FieldList"];
+	        this.PBMap = source["PBMap"];
+	        this.Count = source["Count"];
+	        this.ProSPecs = this.convertValues(source["ProSPecs"], ProSPecs);
+	        this.TableData = source["TableData"];
+	        this.TotalRow = source["TotalRow"];
+	        this.PricePerKgRow = source["PricePerKgRow"];
+	        this.PricePerItemRow = source["PricePerItemRow"];
+	        this.TotalAmountRow = source["TotalAmountRow"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ProPriceRequest {
+	    productName: string;
+	    spec: string;
+	    total: number;
+	    pricePerKg: number;
+	    pricePerItem: number;
+	    totalAmount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ProPriceRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.productName = source["productName"];
+	        this.spec = source["spec"];
+	        this.total = source["total"];
+	        this.pricePerKg = source["pricePerKg"];
+	        this.pricePerItem = source["pricePerItem"];
+	        this.totalAmount = source["totalAmount"];
+	    }
+	}
+	
 
 }
 

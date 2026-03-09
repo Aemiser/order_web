@@ -15,6 +15,8 @@ export function GetChackDaydata(arg1:time.Time,arg2:time.Time):Promise<checkout.
 
 export function GetConfig():Promise<config.ReConf>;
 
+export function GetDaydata(arg1:time.Time,arg2:time.Time):Promise<checkout.CheckoutResponse>;
+
 export function GetpreviewData():Promise<Array<ordertutil.ExceladdressInfo>>;
 
 export function Greet(arg1:string):Promise<string>;
@@ -26,6 +28,8 @@ export function OrderRecognition(arg1:string,arg2:enum.RecPreviewType):Promise<A
 export function SaveToExcel():Promise<string>;
 
 export function SetConfig(arg1:config.ReConf):Promise<void>;
+
+export function SetPriceData(arg1:Array<checkout.ProPriceRequest>):Promise<checkout.CheckoutResponse>;
 
 export function SetProductBelong(arg1:Record<string, Array<string>>):Promise<void>;
 

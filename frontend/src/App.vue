@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Info, Download, RotateCw, SlidersHorizontal, Wallet } from 'lucide-vue-next';
+import { Info, Download, RotateCw, SlidersHorizontal, Wallet, DollarSign } from 'lucide-vue-next';
 import * as XLSX from 'xlsx';
 
 import Sidebar from './components/Sidebar/Sidebar.vue';
 import demo from './components/demo.vue';
 import Header from './components/Header/Header.vue';
 import FieldDialog from './components/Main/Dialog/Field.vue';
+
 import OrderInputView from './components/Main/OrderInputView.vue';
 import OrderDetailsView from './components/Main/OrderDetailsView.vue';
 import AppSettingsView from './components/Main/AppSettingsView.vue';
 import CheckoutView from './components/Main/Checkout/CheckoutView.vue';
-import { OrderRecognition, GetpreviewData, DeletepreviewData, CreateOrder } from '../wailsjs/go/main/App';
+import { OrderRecognition, GetpreviewData, DeletepreviewData, CreateOrder, SavePriceData, GetDaydata } from '../wailsjs/go/main/App';
 import type { Order } from './types';
 
 
@@ -24,6 +25,10 @@ const isSystemReady = ref(true);
 const statusMessage = ref('系统已就绪 (后端模式)');
 const showConfirmModal = ref(false);
 const showFieldDialog = ref(false);
+const isEditMode = ref(false);
+const checkoutResponse = ref<any>(null);
+const isLoading = ref(false);
+const proPriceRequests = ref<any[]>([]);
 
 // --- Logic ---
 const analyzeOrders = async (isAppend: boolean = false) => {
@@ -182,6 +187,118 @@ const handleConfig = () => {
   showFieldDialog.value = true;
 };
 
+// 处理进入编辑模式
+const handleEnterEditMode = () => {
+  isEditMode.value = true;
+  
+  // 初始化 proPriceRequests 状态
+  if (checkoutResponse.value && checkoutResponse.value.ProSPecs) {
+    const proPriceRequestsData = [];
+    let specIndex = 0;
+    
+    checkoutResponse.value.ProSPecs.forEach((product: any) => {
+      if (product.Specs) {
+        product.Specs.forEach((spec: any) => {
+          const pricePerItem = checkoutResponse.value.PricePerItemRow ? checkoutResponse.value.PricePerItemRow[specIndex] : 0;
+          const pricePerKg = checkoutResponse.value.PricePerKgRow ? checkoutResponse.value.PricePerKgRow[specIndex] : 0;
+          
+          proPriceRequestsData.push({
+            productName: product.Name || '',
+            spec: typeof spec === 'object' ? (spec.name || spec.Name || JSON.stringify(spec)) : spec,
+            total: 0, // 后端会计算
+            pricePerKg: typeof pricePerKg === 'number' ? pricePerKg : 0,
+            pricePerItem: typeof pricePerItem === 'number' ? pricePerItem : 0,
+            totalAmount: 0 // 后端会计算
+          });
+          
+          specIndex++;
+        });
+      }
+    });
+    
+    proPriceRequests.value = proPriceRequestsData;
+  } else {
+    // 如果没有后端数据，使用默认商品数据初始化
+    const defaultProducts = [
+      { name: '香水柠檬', specs: ['5斤', '8斤', '10斤', '20斤'] },
+      { name: '广香一级', specs: ['10斤', '20斤'] },
+      { name: '广香二级', specs: ['7斤', '15斤'] },
+      { name: '黄柠檬', specs: ['3斤', '6斤'] },
+      { name: '金桔', specs: ['2斤', '4斤'] }
+    ];
+    
+    const proPriceRequestsData = [];
+    
+    defaultProducts.forEach(product => {
+      product.specs.forEach(spec => {
+        proPriceRequestsData.push({
+          productName: product.name,
+          spec: spec,
+          total: 0, // 后端会计算
+          pricePerKg: 0,
+          pricePerItem: 0,
+          totalAmount: 0 // 后端会计算
+        });
+      });
+    });
+    
+    proPriceRequests.value = proPriceRequestsData;
+  }
+};
+
+// 处理退出编辑模式
+const handleExitEditMode = () => {
+  isEditMode.value = false;
+};
+
+// 处理保存价格
+const handleSavePrices = async (data?: any[]) => {
+  try {
+    // 如果有数据传入，且数据是数组，存储到状态中
+    if (data && Array.isArray(data)) {
+      proPriceRequests.value = data;
+    }
+    
+    // 验证 proPriceRequests 是否为空
+    if (!proPriceRequests.value || proPriceRequests.value.length === 0) {
+      statusMessage.value = '没有可保存的价格数据';
+      setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+      return;
+    }
+    
+    // 显示加载状态
+    isLoading.value = true;
+    statusMessage.value = '正在保存价格数据...';
+    
+    // 调用后端的 SetPriceData 方法
+    const response = await window['go']['main']['App']['SetPriceData'](proPriceRequests.value);
+    console.log('保存价格成功:', response);
+    // 存储后端响应数据
+    checkoutResponse.value = response;
+    statusMessage.value = '价格保存成功';
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+    isEditMode.value = false;
+  } catch (error) {
+    console.error('保存价格失败:', error);
+    statusMessage.value = '保存价格失败，请重试';
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+  } finally {
+    // 隐藏加载状态
+    isLoading.value = false;
+  }
+};
+
+// 处理保存计量单位
+const handleSaveUnit = (unit: string) => {
+  console.log('保存计量单位:', unit);
+  // 这里可以添加保存计量单位的逻辑
+  // 例如存储到本地存储或发送到后端
+  statusMessage.value = '计量单位保存成功';
+  setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+};
+
+
+
 </script>
 
 <template>
@@ -220,6 +337,12 @@ const handleConfig = () => {
 
         <CheckoutView
           v-if="activeTab === 'checkout'"
+          :isEditMode="isEditMode"
+          :checkoutResponse="checkoutResponse"
+          @save-prices="handleSavePrices"
+          @save-unit="handleSaveUnit"
+          @enter-edit-mode="handleEnterEditMode"
+          @exit-edit-mode="handleExitEditMode"
         />
 
         <AppSettingsView
@@ -269,25 +392,56 @@ const handleConfig = () => {
           <p>总成交品种: <span class="text-white font-bold">14项</span></p>
         </div>
         <div class="flex items-center gap-3">
-          <button 
-            class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
-          >
-            <RotateCw class="w-4 h-4" />
-            <span class="text-xs font-bold">刷新数据</span>
-          </button>
-          <button 
-            @click="handleConfig"
-            class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
-          >
-            <SlidersHorizontal class="w-4 h-4" />
-            <span class="text-xs font-bold">字段配置</span>
-          </button>
-          <button 
-            class="h-10 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
-          >
-            <Wallet class="w-4 h-4" />
-            <span class="text-xs">结算账单</span>
-          </button>
+          <!-- 编辑模式下的按钮 -->
+          <template v-if="isEditMode">
+            <button 
+              @click="handleExitEditMode"
+              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+            >
+              <span class="text-xs font-bold">取消</span>
+            </button>
+            <button 
+              @click="handleSavePrices"
+              :disabled="isLoading"
+              class="h-10 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+            >
+              <span v-if="isLoading" class="animate-spin mr-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </span>
+              <span class="text-xs">{{ isLoading ? '保存中...' : '确定' }}</span>
+            </button>
+          </template>
+          <!-- 非编辑模式下的按钮 -->
+          <template v-else>
+            <button 
+              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+            >
+              <RotateCw class="w-4 h-4" />
+              <span class="text-xs font-bold">刷新数据</span>
+            </button>
+            <button 
+              @click="handleConfig"
+              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+            >
+              <SlidersHorizontal class="w-4 h-4" />
+              <span class="text-xs font-bold">字段配置</span>
+            </button>
+            <button 
+              @click="handleEnterEditMode"
+              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+            >
+              <DollarSign class="w-4 h-4" />
+              <span class="text-xs font-bold">编辑金额</span>
+            </button>
+            <button 
+              class="h-10 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+            >
+              <Wallet class="w-4 h-4" />
+              <span class="text-xs">结算账单</span>
+            </button>
+          </template>
         </div>
       </footer>
 
@@ -315,6 +469,8 @@ const handleConfig = () => {
         :pbMap="{}"
         @close="showFieldDialog = false" 
       />
+      
+
     </main>
   </div>
 </template>

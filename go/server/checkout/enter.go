@@ -7,14 +7,18 @@ import (
 	"order_server/go/models"
 	ordertutil "order_server/go/utils/order"
 	time2 "order_server/go/utils/time"
+	"regexp"
+	"strconv"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Spec struct {
 	Name         string  `json:"name"`
 	PricePerKg   float64 `json:"pricePerKg"`   // 每斤/元（用户输入）
 	PricePerItem float64 `json:"pricePerItem"` // 每件/元（用户输入，可选）
-
+	Total        int     `json:"total"`        // 总件数
 }
 type ProSPecs struct {
 	SID   uint
@@ -23,11 +27,72 @@ type ProSPecs struct {
 }
 
 type CheckoutResponse struct {
-	FieldList []string            // 未分类字段
-	Count     uint                // 查询的条数
-	ProSPecs  []ProSPecs          // 商品规格及分类.及表头
-	TableData []string            // 表格数据
-	PBMap     map[string][]string // 商品归属map
+	FieldList       []string            // 未分类字段
+	PBMap           map[string][]string // 商品归属map
+	Count           uint                // 查询的条数
+	ProSPecs        []ProSPecs          // 商品规格及分类.及表头
+	TableData       []string            // 表格数据
+	TotalRow        []int               // 总件数行
+	PricePerKgRow   []float64           // 每件/元 行（用户输入）
+	PricePerItemRow []float64           // 每件/元 行
+	TotalAmountRow  []float64           // 总金额行
+}
+
+type ProPriceRequest struct {
+	ProductName  string  `json:"productName"`  // 商品: 香水柠檬
+	Spec         string  `json:"spec"`         // 规格 : 5斤
+	Total        int     `json:"total"`        // 总件数
+	PricePerKg   float64 `json:"pricePerKg"`   //每斤/元
+	PricePerItem float64 `json:"pricePerItem"` // 每件/元
+	TotalAmount  float64 `json:"totalAmount"`  // 总金额
+}
+
+type CheackDay struct {
+	Date  time.Time
+	specs []ProSPecs
+}
+
+var checkoutresp = CheckoutResponse{}           // 响应副本
+var gspecsMap = make(map[string]map[string]int) // map[商品规格名称]map[商品规格]总件数
+var proPrice = []ProPriceRequest{}
+var addresinfolist = []models.AddressInfo{}
+
+// 添加结账数据
+func AddcheckoutData(sm *SpecManager, list []models.AddressInfo) {
+
+	var order = &models.Order{}
+	// 处理数据,获取总件数
+	for _, info := range addresinfolist {
+		for _, spec := range info.ProductSpecs {
+			for k, v := range gspecsMap {
+				if spec.Name == k {
+					for kk, vv := range v {
+						if spec.Weight == ordertutil.GetNumberInSpec(kk) {
+							order.Quantity = vv
+							order.Date = info.CreatedAt
+							order.ProductName = spec.Name
+							order.Spec = fmt.Sprintf("%d斤", spec.Weight)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// 获取商品单价
+	for _, info := range addresinfolist {
+		for _, spec := range info.ProductSpecs {
+			for _, pr := range proPrice {
+				if pr.ProductName == spec.Name {
+					order.PricePerKg = pr.PricePerKg
+					order.PricePerItem = pr.PricePerItem
+				}
+			}
+		}
+	}
+
+	sm.AddOrder(*order)
+
 }
 
 func Checkout(timedate time.Time) {
@@ -37,6 +102,7 @@ func Checkout(timedate time.Time) {
 	sm := NewSpecManager()
 
 	// 添加数据
+	AddcheckoutData(sm, addresinfolist)
 	fmt.Println(sm.Orders)
 	// 打印统计摘要
 	sm.PrintSummary()
@@ -118,7 +184,7 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 	var _list []models.AddressInfo
 	var count int64
 	global.Db.Debug().Model(&_list).Count(&count).Where("created_at >= ? AND created_at <= ?", begindate, enddate).Find(&_list)
-
+	addresinfolist = _list
 	// 检查是否存在新商品
 	newSpecList := ordertutil.Specchecking(_list)
 
@@ -142,17 +208,18 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 		}
 	}
 
-	// 获取商品分类及规格
-	specsMap := make(map[string]map[string]bool)
+	// 获取商品分类及规格，同时计算该分类的总件数 int 键为商品分类名称，值为商品规格 map[string]int   ==》 商品规格为键，总件数为值
+	specsMap := make(map[string]map[string]int)
 	for _, info := range _list {
 		for _, spec := range info.ProductSpecs { // 得到这订单所有的商品规格
-			wg := fmt.Sprintf("%d 斤", spec.Weight)
+			wg := fmt.Sprintf("%d斤", spec.Weight)
 			if _, ok := specsMap[spec.Name]; !ok {
-				specsMap[spec.Name] = make(map[string]bool)
+				specsMap[spec.Name] = make(map[string]int)
 			}
-			specsMap[spec.Name][wg] = true
+			specsMap[spec.Name][wg] += 1
 		}
 	}
+	gspecsMap = specsMap
 
 	// 转换为切片格式
 	ProSPecsMap := make(map[string][]string)
@@ -168,7 +235,13 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 	for k, v := range ProSPecsMap {
 		var speclist = make([]Spec, 0)
 		for _, vv := range v {
-			speclist = append(speclist, Spec{Name: vv})
+			// 这里可以从全局变量或数据库中获取价格信息
+			// 暂时使用默认值
+			speclist = append(speclist, Spec{
+				Name:         vv,
+				PricePerKg:   0, // 默认为0，需要用户填写
+				PricePerItem: 0, // 默认为0，需要用户填写
+			})
 		}
 		ppcs := ProSPecs{
 			SID:   sid,
@@ -190,7 +263,7 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 		}
 		for _, spec := range info.ProductSpecs {
 			productName := spec.Name
-			specStr := fmt.Sprintf("%d 斤", spec.Weight)
+			specStr := fmt.Sprintf("%d斤", spec.Weight)
 			if _, ok := dateMap[date][productName]; !ok {
 				dateMap[date][productName] = make(map[string]int)
 			}
@@ -200,7 +273,8 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 
 	// 获取表格数据
 	var tableData []string
-
+	var _totalRowlist = make(map[string][]int, 0)
+	var Rowlen int
 	// 生成表格数据
 	for date, productMap := range dateMap {
 		// 转换日期格式为 "3月8日" 格式
@@ -213,21 +287,31 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 		// 构建行数据
 		rowData := dateStr
 
+		var rowlen int
 		// 按照 ProSPecsList 的顺序和每个商品的规格顺序生成数据
 		for _, product := range ProSPecsList {
 			for _, spec := range product.Specs {
-				if productMap[product.Name] != nil {
-					if countVal, ok := productMap[product.Name][spec]; ok {
-						rowData += fmt.Sprintf(",%d", countVal)
-					} else {
-						rowData += ",—"
-					}
+				if countVal, ok := productMap[product.Name][spec.Name]; ok {
+					_totalRowlist[date] = append(_totalRowlist[date], countVal)
+					rowData += fmt.Sprintf(",%d", countVal)
 				} else {
+					_totalRowlist[date] = append(_totalRowlist[date], 0)
 					rowData += ",—"
 				}
+				rowlen++
 			}
 		}
+		Rowlen = rowlen
 		tableData = append(tableData, rowData)
+	}
+
+	// 获取总件数表格数据
+	var totalRow = make([]int, Rowlen)
+	for _, v := range _totalRowlist {
+		for i, i2 := range v {
+			totalRow[i] += i2
+		}
+
 	}
 
 	// 构建响应
@@ -237,8 +321,9 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 		PBMap:     global.ProductBelongMap,
 		ProSPecs:  ProSPecsList,
 		TableData: tableData,
+		TotalRow:  totalRow,
 	}
-
+	checkoutresp = resp
 	return resp
 }
 
@@ -248,28 +333,67 @@ func SetFieldList(mapp map[string][]string) {
 	core.WriteProductBelongMap(mapp)
 }
 
-// 添加结账数据
-func AddcheckoutData(sm *SpecManager, list []models.AddressInfo) {
+// 设置金额
+func SetPrice(_list []ProPriceRequest) CheckoutResponse {
 
-	for _, info := range list {
-		for _, spec := range info.ProductSpecs {
-			// 数据预处理
-			for k, v := range global.ProductBelongMap {
-				for _, vv := range v {
-					if spec.Name == vv {
-						spec.Name = k
+	fmt.Println("_list", _list)
+	var pricePerkgRow, pricePerItemRow, totalAmountRow []float64
+	// 获取该商品 ->规格的总件数
+	for i := range _list { // 使用索引修改值
+		for k, v := range gspecsMap {
+			if _list[i].ProductName == k { // 定位商品
+				for spec, total := range v {
+					if spec == _list[i].Spec { // 定位规格
+						_list[i].Total = total
+						// 获取规格的斤数
+						re, err := regexp.Compile(`\d+`)
+						if err != nil {
+							logrus.Errorf("设置金额获取规格的斤数error", err)
+						}
+						number := re.FindString(spec)
+						num, err := strconv.Atoi(number)
+						if err != nil {
+							logrus.Errorf("设置金额转换error", err)
+						}
+
+						if _list[i].PricePerItem == 0.00 {
+							_list[i].PricePerItem = _list[i].PricePerKg * float64(num) //每斤/元  * 斤 = 每件/元
+						}
+
+						// 计算总金额
+						_list[i].TotalAmount = float64(_list[i].Total) * _list[i].PricePerItem
 					}
 				}
 			}
-
-			sm.AddOrder(models.Order{
-				ID:          info.ID,
-				Date:        info.CreatedAt,
-				ProductName: spec.Name,
-				Spec:        fmt.Sprintf("%d 斤", spec.Weight),
-				Quantity:    1,
-			})
 		}
 	}
 
+	// 给副本响应数据赋值
+	for i := range checkoutresp.ProSPecs { // 使用索引修改值
+		for _, item := range _list { //
+			if checkoutresp.ProSPecs[i].Name == item.ProductName { // 定位商品
+				for j, spec := range checkoutresp.ProSPecs[i].Specs { // 遍历商品规格
+					if spec.Name == item.Spec { // 定位规格
+						checkoutresp.ProSPecs[i].Specs[j].PricePerKg = item.PricePerKg
+						checkoutresp.ProSPecs[i].Specs[j].PricePerItem = item.PricePerItem
+
+						pricePerkgRow = append(pricePerkgRow, item.PricePerKg)
+						pricePerItemRow = append(pricePerItemRow, item.PricePerItem)
+						totalAmountRow = append(totalAmountRow, item.TotalAmount)
+					}
+
+				}
+			}
+		}
+	}
+	fmt.Println("pricePerkgRow", pricePerkgRow)
+	fmt.Println("pricePerItemRow", pricePerItemRow)
+	fmt.Println("totalAmountRow", totalAmountRow)
+	//设置返回值
+	checkoutresp.PricePerKgRow = pricePerkgRow
+	checkoutresp.PricePerItemRow = pricePerItemRow
+	checkoutresp.TotalAmountRow = totalAmountRow
+	fmt.Println("checkoutresp", checkoutresp)
+	// 为execl添加数据
+	return checkoutresp
 }

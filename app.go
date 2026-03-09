@@ -121,3 +121,13 @@ func (a *App) GetChackDaydata(statime time.Time, endtime time.Time) checkout.Che
 func (a *App) SetProductBelong(productBelongMap map[string][]string) {
 	checkout.SetFieldList(productBelongMap)
 }
+
+// 保存价格数据
+func (a *App) SetPriceData(req []checkout.ProPriceRequest) checkout.CheckoutResponse {
+	return checkout.SetPrice(req)
+}
+
+// 获取账单的查询数据
+func (a *App) GetDaydata(statime time.Time, endtime time.Time) checkout.CheckoutResponse {
+	return checkout.GetDaydata(statime, endtime)
+}

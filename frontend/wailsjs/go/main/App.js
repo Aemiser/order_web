@@ -18,6 +18,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function GetDaydata(arg1, arg2) {
+  return window['go']['main']['App']['GetDaydata'](arg1, arg2);
+}
+
 export function GetpreviewData() {
   return window['go']['main']['App']['GetpreviewData']();
 }
@@ -40,6 +44,10 @@ export function SaveToExcel() {
 
 export function SetConfig(arg1) {
   return window['go']['main']['App']['SetConfig'](arg1);
+}
+
+export function SetPriceData(arg1) {
+  return window['go']['main']['App']['SetPriceData'](arg1);
 }
 
 export function SetProductBelong(arg1) {

@@ -5,15 +5,15 @@
         <thead>
           <tr class="product-group">
             <th>日期 / 产品</th>
-            <th v-for="product in products" :key="product.name" :colspan="product.specs.length">
+            <th v-for="product in products" :key="product.name" :colspan="product.specs.length" class="product-divider">
               {{ product.name }}
             </th>
           </tr>
           <tr class="spec-header">
             <th></th>
             <template v-for="product in products" :key="product.name">
-              <th v-for="spec in product.specs" :key="`${product.name}-${spec}`">
-                {{ spec }}
+              <th v-for="spec in product.specs" :key="`${product.name}-${spec.name || spec}`">
+                {{ spec.name || spec }}
               </th>
             </template>
           </tr>
@@ -22,47 +22,115 @@
           <!-- 使用v-for动态渲染数据行 -->
           <tr v-for="(row, index) in tableData" :key="index" class="data-row">
             <td class="date-column">{{ row.date }}</td>
-            <td v-for="(value, idx) in row.values" :key="idx" class="spec-cell">
-              <template v-if="value !== '—'">
-                <span class="spec-value">{{ value }}</span>
-                <span class="spec-unit">件</span>
-              </template>
-              <template v-else>
-                <span class="empty-cell">—</span>
-              </template>
-            </td>
+            <template v-for="(product, productIndex) in products" :key="product.name">
+              <td v-for="(spec, specIndex) in product.specs" :key="`${productIndex}-${specIndex}`" class="spec-cell" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+                <template v-if="row.values && row.values[getSpecIndex(productIndex, specIndex)] !== '—'">
+                  <span class="spec-value">{{ row.values[getSpecIndex(productIndex, specIndex)] }}</span>
+                </template>
+                <template v-else>
+                  <span class="empty-cell">—</span>
+                </template>
+              </td>
+            </template>
           </tr>
 
           <!-- 总计行 -->
           <tr class="total-row">
             <td class="total-label">总计 (件)</td>
-            <td v-for="(value, index) in totalRow" :key="`total-${index}`">
-              {{ value }}
-            </td>
+            <template v-for="(product, productIndex) in products" :key="product.name">
+              <td v-for="(spec, specIndex) in product.specs" :key="`total-${productIndex}-${specIndex}`" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+                {{ totalRow[getSpecIndex(productIndex, specIndex)] }}
+              </td>
+            </template>
           </tr>
 
           <!-- 元/斤行 -->
           <tr class="price-row">
-            <td class="price-label">元/斤</td>
-            <td v-for="(value, index) in pricePerKgRow" :key="`kg-${index}`">
-              {{ value }}
+            <td class="price-label">
+              <template v-if="isEditingUnit">
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    v-model="editUnit"
+                    @blur="saveUnit"
+                    @keyup.enter="saveUnit"
+                    @keyup.esc="cancelEditUnit"
+                    class="bg-white/5 border border-white/10 rounded px-3 py-1 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                    placeholder="输入计量单位"
+                  />
+                  <button 
+                    @click="saveUnit"
+                    class="p-1 rounded bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                    title="保存"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                  <button 
+                    @click="cancelEditUnit"
+                    class="p-1 rounded bg-white/5 text-slate-400 hover:text-white transition-colors"
+                    title="取消"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </template>
+              <template v-else>
+                <span @click="startEditUnit" class="cursor-pointer hover:text-blue-400 transition-colors">
+                  {{ unitOfMeasure }}
+                </span>
+              </template>
             </td>
+            <template v-for="(product, productIndex) in products" :key="product.name">
+              <td v-for="(spec, specIndex) in product.specs" :key="`kg-${productIndex}-${specIndex}`" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+                <template v-if="isEditMode">
+                  <input 
+                    type="text" 
+                    :value="editPricePerKg[getSpecIndex(productIndex, specIndex)] || ''"
+                    @input="handlePricePerKgChange(getSpecIndex(productIndex, specIndex), ($event.target as HTMLInputElement).value)"
+                    class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
+                    placeholder="0.00"
+                  />
+                </template>
+                <template v-else>
+                  {{ pricePerKgRow[getSpecIndex(productIndex, specIndex)] }}
+                </template>
+              </td>
+            </template>
           </tr>
 
-          <!-- 单价行 -->
+          <!-- 元/件行 -->
           <tr class="price-row">
             <td class="price-label">元/件</td>
-            <td v-for="(value, index) in prices" :key="`price-${index}`">
-              {{ value }}
-            </td>
+            <template v-for="(product, productIndex) in products" :key="product.name">
+              <td v-for="(spec, specIndex) in product.specs" :key="`price-${productIndex}-${specIndex}`" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+                <template v-if="isEditMode">
+                  <input 
+                    type="text" 
+                    :value="editPrices[getSpecIndex(productIndex, specIndex)] || ''"
+                    @input="handlePriceChange(getSpecIndex(productIndex, specIndex), ($event.target as HTMLInputElement).value)"
+                    class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
+                    placeholder="0.00"
+                  />
+                </template>
+                <template v-else>
+                  {{ pricePerItemRow[getSpecIndex(productIndex, specIndex)] }}
+                </template>
+              </td>
+            </template>
           </tr>
 
           <!-- 总金额行 -->
           <tr class="amount-row">
             <td class="amount-label">总金额 (元)</td>
-            <td v-for="(value, index) in amountRow" :key="`amount-${index}`">
-              {{ value }}
-            </td>
+            <template v-for="(product, productIndex) in products" :key="product.name">
+              <td v-for="(spec, specIndex) in product.specs" :key="`amount-${productIndex}-${specIndex}`" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+                {{ totalAmountRow[getSpecIndex(productIndex, specIndex)] }}
+              </td>
+            </template>
           </tr>
         </tbody>
       </table>
@@ -116,74 +184,23 @@ const tableData = ref<TableRow[]>([])
 // 单价数据
 const prices = ref<(number | string)[]>([])
 
-// 计算属性：总计行数据
-const totalRow = computed(() => {
-  if (tableData.value.length === 0) {
-    return []
-  }
-  
-  const totalValues: (number | string)[] = []
-  const firstRow = tableData.value[0]
-  
-  if (firstRow && firstRow.values) {
-    for (let i = 0; i < firstRow.values.length; i++) {
-      let sum = 0
-      let hasValue = false
-      
-      for (const row of tableData.value) {
-        if (row.values && row.values[i] !== '—' && row.values[i] !== '' && row.values[i] !== null && row.values[i] !== undefined) {
-          const value = Number(row.values[i])
-          if (!isNaN(value)) {
-            sum += value
-            hasValue = true
-          }
-        }
-      }
-      
-      totalValues.push(hasValue ? sum : '—')
-    }
-  }
-  
-  return totalValues
-})
+// 后端返回的汇总数据
+const totalRow = ref<(number | string)[]>([])
+const pricePerKgRow = ref<(number | string)[]>([])
+const pricePerItemRow = ref<(number | string)[]>([])
+const totalAmountRow = ref<(number | string)[]>([])
 
-// 计算属性：元/斤行数据
-const pricePerKgRow = computed(() => {
-  if (prices.value.length === 0) {
-    return []
-  }
-  
-  return prices.value.map(price => {
-    if (price === '—' || price === '' || price === null || price === undefined) {
-      return '—'
-    }
-    const priceValue = Number(price)
-    return !isNaN(priceValue) ? priceValue / 2 : '—'
-  })
-})
+// 编辑模式状态
+const isEditMode = ref(false)
 
-// 计算属性：总金额行数据
-const amountRow = computed(() => {
-  if (totalRow.value.length === 0 || prices.value.length === 0) {
-    return []
-  }
-  
-  return totalRow.value.map((total, index) => {
-    if (total === '—' || total === '' || total === null || total === undefined) {
-      return '—'
-    }
-    if (index >= prices.value.length) {
-      return '—'
-    }
-    const price = prices.value[index]
-    if (price === '—' || price === '' || price === null || price === undefined) {
-      return '—'
-    }
-    const totalValue = Number(total)
-    const priceValue = Number(price)
-    return !isNaN(totalValue) && !isNaN(priceValue) ? totalValue * priceValue : '—'
-  })
-})
+// 本地编辑的价格数据
+const editPrices = ref<(number | string)[]>([])
+const editPricePerKg = ref<(number | string)[]>([])
+
+// 计量单位状态
+const unitOfMeasure = ref('元/斤')
+const isEditingUnit = ref(false)
+const editUnit = ref('元/斤')
 
 // 模拟从后端获取数据
 const fetchCheckoutData = async (): Promise<CheckoutResponse> => {
@@ -222,7 +239,14 @@ const transformData = (data: CheckoutResponse): TableRow[] => {
   if (data.ProSPecs && data.ProSPecs.length > 0) {
     products.value = data.ProSPecs.map(proSpec => ({
       name: proSpec.Name || '',
-      specs: proSpec.Specs || []
+      specs: (proSpec.Specs || []).map(spec => {
+        // 如果 spec 是对象，确保它有 name 属性
+        if (typeof spec === 'object' && spec !== null) {
+          return { name: spec.name || spec.Name || JSON.stringify(spec) };
+        }
+        // 如果 spec 是字符串，直接使用
+        return { name: spec };
+      })
     }));
   } else {
     // 当没有商品数据时，清空商品列表
@@ -252,16 +276,14 @@ const transformData = (data: CheckoutResponse): TableRow[] => {
     });
   }
   
-  // 模拟单价数据（实际项目中应该从后端获取）
-  // 这里根据商品规格数量生成对应的单价数据
-  const totalSpecsCount = products.value.reduce((total, product) => total + (product.specs ? product.specs.length : 0), 0);
-  const newPrices: (number | string)[] = [];
-  for (let i = 0; i < totalSpecsCount; i++) {
-    // 模拟不同规格的单价
-    const basePrice = 10 + (i * 2);
-    newPrices.push(basePrice);
-  }
-  prices.value = newPrices;
+  // 从后端数据中提取汇总数据
+  totalRow.value = data.TotalRow || [];
+  pricePerKgRow.value = data.PricePerKgRow || [];
+  pricePerItemRow.value = data.PricePerItemRow || [];
+  totalAmountRow.value = data.totalAmountRow || [];
+  
+  // 更新单价数据
+  prices.value = pricePerItemRow.value;
   
   return tableRows;
 };
@@ -278,12 +300,189 @@ const handleGenerateTestData = (testData: CheckoutResponse) => {
 // 定义组件事件
 const emit = defineEmits<{
   (e: 'generate-test-data', testData: CheckoutResponse): void;
+  (e: 'save-prices', prices: (number | string)[]): void;
+  (e: 'save-unit', unit: string): void;
+  (e: 'enter-edit-mode'): void;
+  (e: 'exit-edit-mode'): void;
 }>();
 
 // 定义组件属性
 const props = defineProps<{
   testData?: CheckoutResponse;
+  checkoutResponse?: CheckoutResponse;
+  isEditMode?: boolean;
 }>();
+
+// 监听编辑模式变化
+watch(() => props.isEditMode, (newVal) => {
+  if (newVal !== undefined) {
+    if (!newVal && isEditMode.value) {
+      // 退出编辑模式时，先保存价格数据
+      savePrices();
+    }
+    
+    isEditMode.value = newVal;
+    if (newVal) {
+      // 进入编辑模式时初始化编辑价格数据
+      editPrices.value = [...pricePerItemRow.value];
+      editPricePerKg.value = [...pricePerKgRow.value];
+    } else {
+      // 退出编辑模式时重置编辑价格数据
+      editPrices.value = [];
+      editPricePerKg.value = [];
+    }
+  }
+}, { immediate: true });
+
+// 监听后端响应数据变化
+watch(() => props.checkoutResponse, (newVal) => {
+  if (newVal) {
+    console.log('收到后端响应数据:', newVal);
+    // 更新表格数据
+    const transformedData = transformData(newVal);
+    tableData.value = transformedData;
+    // 更新汇总数据
+    totalRow.value = newVal.TotalRow || [];
+    pricePerKgRow.value = newVal.PricePerKgRow || [];
+    pricePerItemRow.value = newVal.PricePerItemRow || [];
+    totalAmountRow.value = newVal.TotalAmountRow || [];
+  }
+}, { deep: true });
+
+// 计算规格在一维数组中的索引
+const getSpecIndex = (productIndex: number, specIndex: number): number => {
+  let index = 0;
+  for (let i = 0; i < productIndex; i++) {
+    if (products.value[i] && products.value[i].specs) {
+      index += products.value[i].specs.length;
+    }
+  }
+  return index + specIndex;
+};
+
+// 进入编辑模式
+const enterEditMode = () => {
+  isEditMode.value = true;
+  // 初始化编辑价格数据
+  editPrices.value = [...pricePerItemRow.value];
+  editPricePerKg.value = [...pricePerKgRow.value];
+};
+
+// 退出编辑模式
+const exitEditMode = () => {
+  isEditMode.value = false;
+  // 重置编辑价格数据
+  editPrices.value = [];
+  editPricePerKg.value = [];
+};
+
+// 保存编辑的价格
+const savePrices = () => {
+  // 验证输入
+  const isValid = editPrices.value.every(price => {
+    if (price === '—' || price === '') return true;
+    const numPrice = parseFloat(price as string);
+    return !isNaN(numPrice) && numPrice >= 0;
+  }) && editPricePerKg.value.every(price => {
+    if (price === '—' || price === '') return true;
+    const numPrice = parseFloat(price as string);
+    return !isNaN(numPrice) && numPrice >= 0;
+  });
+  
+  if (isValid) {
+    // 构造 ProPriceRequest 数据结构
+    const proPriceRequests = [];
+    let specIndex = 0;
+    
+    products.value.forEach(product => {
+      product.specs.forEach(spec => {
+        const price = editPrices.value[specIndex];
+        const pricePerKg = editPricePerKg.value[specIndex];
+        if (price !== '—' && price !== '' || pricePerKg !== '—' && pricePerKg !== '') {
+          const priceValue = price !== '—' && price !== '' ? parseFloat(price as string) : 0;
+          const pricePerKgValue = pricePerKg !== '—' && pricePerKg !== '' ? parseFloat(pricePerKg as string) : 0;
+          proPriceRequests.push({
+            productName: product.name,
+            spec: spec.name || spec,
+            total: 0, // 后端会计算
+            pricePerKg: pricePerKgValue,
+            pricePerItem: priceValue,
+            totalAmount: 0 // 后端会计算
+          });
+        }
+        specIndex++;
+      });
+    });
+    
+    // 更新价格数据
+    pricePerItemRow.value = [...editPrices.value];
+    pricePerKgRow.value = [...editPricePerKg.value];
+    // 退出编辑模式
+    exitEditMode();
+    // 触发保存事件，传递构造的数据
+    emit('save-prices', proPriceRequests);
+  } else {
+    // 显示错误提示
+    alert('请输入有效的价格');
+  }
+};
+
+// 处理价格输入变化
+const handlePriceChange = (index: number, value: string) => {
+  // 只允许输入数字和小数点
+  const numericValue = value.replace(/[^0-9.]/g, '');
+  // 确保只有一个小数点
+  const parts = numericValue.split('.');
+  if (parts.length > 2) {
+    return;
+  }
+  // 限制小数点后两位
+  if (parts.length === 2 && parts[1].length > 2) {
+    return;
+  }
+  editPrices.value[index] = numericValue;
+};
+
+// 处理 pricePerKg 输入变化
+const handlePricePerKgChange = (index: number, value: string) => {
+  // 只允许输入数字和小数点
+  const numericValue = value.replace(/[^0-9.]/g, '');
+  // 确保只有一个小数点
+  const parts = numericValue.split('.');
+  if (parts.length > 2) {
+    return;
+  }
+  // 限制小数点后两位
+  if (parts.length === 2 && parts[1].length > 2) {
+    return;
+  }
+  editPricePerKg.value[index] = numericValue;
+};
+
+// 开始编辑计量单位
+const startEditUnit = () => {
+  isEditingUnit.value = true;
+  editUnit.value = unitOfMeasure.value;
+};
+
+// 保存计量单位
+const saveUnit = () => {
+  // 验证输入
+  if (editUnit.value.trim()) {
+    unitOfMeasure.value = editUnit.value.trim();
+    isEditingUnit.value = false;
+    // 触发保存事件
+    emit('save-unit', unitOfMeasure.value);
+  } else {
+    alert('请输入有效的计量单位');
+  }
+};
+
+// 取消编辑计量单位
+const cancelEditUnit = () => {
+  isEditingUnit.value = false;
+  editUnit.value = unitOfMeasure.value;
+};
 
 // 监听测试数据变化
 
@@ -329,9 +528,10 @@ onMounted(async () => {
   --text-primary: #F1F5F9;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
-  --border-light: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(255, 255, 255, 0.2);
   --border-lighter: rgba(255, 255, 255, 0.05);
   --row-hover: rgba(255, 255, 255, 0.02);
+  --product-border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 * {
@@ -386,19 +586,34 @@ th {
   color: var(--accent-blue);
   font-size: 1rem;
   padding: 14px 8px;
+  border-right: 2px solid #3B82F6;
+}
+
+.product-group th:last-child {
+  border-right: none;
 }
 
 .spec-header th {
   background: rgba(255, 255, 255, 0.01);
   color: var(--accent-teal);
+  border-right: 2px solid #3B82F6;
+}
+
+.spec-header th:last-child {
+  border-right: none;
 }
 
 td {
   padding: 14px 12px;
   border-bottom: 1px solid var(--border-lighter);
+  border-right: 2px solid #3B82F6;
   text-align: center;
   vertical-align: middle;
   color: var(--text-primary);
+}
+
+td:last-child {
+  border-right: none;
 }
 
 .data-row:hover td {
@@ -497,6 +712,11 @@ td {
   color: #A78BFA;
   text-align: left;
   padding-left: 18px;
+}
+
+/* 产品分割线 */
+.product-divider {
+  border-left: 2px solid #3B82F6;
 }
 
 /* 底部图例 */
