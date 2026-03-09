@@ -17,6 +17,7 @@ import {
   ChevronLeft
 } from 'lucide-vue-next';
 import { OrderQuery } from '../../../wailsjs/go/main/App';
+import { ElDatePicker } from 'element-plus';
 
 const props = defineProps<{
   activeTab?: string;
@@ -60,23 +61,35 @@ const searchParams = ref({
   endTime: ''
 });
 
+// 日期范围
+const dateRange = ref<[string, string] | null>(null);
+
 // 错误信息
 const errors = ref({
   dateRange: ''
 });
 
+// 处理日期变化
+const handleDateChange = () => {
+  // 清除错误信息
+  errors.value.dateRange = '';
+  
+  // 更新 searchParams 中的 startTime 和 endTime
+  if (dateRange.value && dateRange.value.length === 2) {
+    searchParams.value.startTime = dateRange.value[0];
+    searchParams.value.endTime = dateRange.value[1];
+  } else {
+    searchParams.value.startTime = '';
+    searchParams.value.endTime = '';
+  }
+};
+
 // 验证日期范围
 const validateDateRange = () => {
-  // 检查起始日期和截至日期是否同时存在或同时不存在
-  if ((searchParams.value.startTime && !searchParams.value.endTime) || (!searchParams.value.startTime && searchParams.value.endTime)) {
-    errors.value.dateRange = '起始日期和截至日期必须同时填写或同时不填写';
-    return false;
-  }
-  
   // 检查日期范围是否有效
-  if (searchParams.value.startTime && searchParams.value.endTime) {
-    const startDate = new Date(searchParams.value.startTime);
-    const endDate = new Date(searchParams.value.endTime);
+  if (dateRange.value && dateRange.value.length === 2) {
+    const startDate = new Date(dateRange.value[0]);
+    const endDate = new Date(dateRange.value[1]);
     
     if (endDate < startDate) {
       errors.value.dateRange = '截至时间不能早于起始时间';
@@ -352,33 +365,23 @@ const resetQuery = async () => {
 <!--            </div>-->
 <!--          </div>-->
           
-          <div class="space-y-2">
+          <div class="space-y-2 col-span-1 md:col-span-2">
             <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2">
-              起始时间
+              日期范围
             </label>
             <div class="relative">
-              <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/60" />
-              <input 
-                type="date" 
-                v-model="searchParams.startTime" 
-                class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-slate-200 transition-all duration-200"
-                :class="{ 'border-red-400': errors.dateRange }"
-              >
-            </div>
-          </div>
-          
-          <div class="space-y-2">
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2">
-              截至时间
-            </label>
-            <div class="relative">
-              <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/60" />
-              <input 
-                type="date" 
-                v-model="searchParams.endTime" 
-                class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-slate-200 transition-all duration-200"
-                :class="{ 'border-red-400': errors.dateRange }"
-              >
+              <ElDatePicker
+                v-model="dateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                class="w-full"
+                :popper-class="'date-picker-popper'"
+                :clearable="false"
+                size="large"
+                @change="handleDateChange"
+              />
             </div>
           </div>
 
@@ -615,6 +618,119 @@ input[type="date"].border-red-400 {
   border-color: #f87171;
   background-color: rgba(248, 113, 113, 0.05);
 }
+
+/* Element Plus 日期选择器样式 */
+:deep(.el-date-editor) {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:deep(.el-date-editor .el-input__wrapper) {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:deep(.el-input__wrapper) {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box !important;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #3B82F6;
+  background-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 1px #3B82F6 inset;
+}
+
+:deep(.el-input__inner) {
+  color: #e2e8f0;
+  font-size: 0.875rem;
+}
+
+:deep(.el-input__placeholder) {
+  color: #94A3B8;
+}
+
+:deep(.el-range-separator) {
+  color: #94A3B8;
+}
+
+/* 日期选择器弹出层样式 */
+.date-picker-popper {
+  background-color: #1E2228 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+}
+
+:deep(.el-date-picker__header) {
+  background-color: #1E2228 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+:deep(.el-date-picker__header-label) {
+  color: #e2e8f0 !important;
+}
+
+:deep(.el-date-picker__prev-btn:hover, .el-date-picker__next-btn:hover) {
+  color: #3B82F6 !important;
+}
+
+:deep(.el-date-table th) {
+  color: #94A3B8 !important;
+}
+
+:deep(.el-date-table td) {
+  color: #e2e8f0 !important;
+}
+
+:deep(.el-date-table td:hover) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+:deep(.el-date-table td.is-selected) {
+  background-color: #3B82F6 !important;
+}
+
+:deep(.el-date-table td.is-today) {
+  color: #3B82F6 !important;
+}
+
+:deep(.el-date-table td.is-disabled) {
+  color: #475569 !important;
+}
+
+:deep(.el-picker-panel__footer) {
+  background-color: #1E2228 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+:deep(.el-button--primary) {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+}
+
+:deep(.el-button--default) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
+}
+
+:deep(.el-button--default:hover) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 .table-row-hover:hover {
   background-color: rgba(255, 255, 255, 0.02);
 }

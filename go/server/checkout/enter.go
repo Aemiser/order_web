@@ -1,17 +1,20 @@
 package checkout
 
 import (
+	"context"
 	"fmt"
 	"order_server/go/core"
 	"order_server/go/global"
 	"order_server/go/models"
 	ordertutil "order_server/go/utils/order"
 	time2 "order_server/go/utils/time"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type Spec struct {
@@ -56,6 +59,7 @@ var checkoutresp = CheckoutResponse{}           // 响应副本
 var gspecsMap = make(map[string]map[string]int) // map[商品规格名称]map[商品规格]总件数
 var proPrice = []ProPriceRequest{}
 var addresinfolist = []models.AddressInfo{}
+var begtime, endtime time.Time
 
 // 添加结账数据
 func AddcheckoutData(sm *SpecManager) {
@@ -137,7 +141,7 @@ func AddcheckoutData(sm *SpecManager) {
 	fmt.Println("====================")
 }
 
-func Checkout() {
+func Checkout(ctx context.Context) {
 	fmt.Println("========== 商品销售统计Excel生成器 ==========")
 
 	// 创建规格管理器
@@ -152,15 +156,23 @@ func Checkout() {
 	// 生成Excel文件
 	fmt.Println("\n========== 生成Excel文件 ==========")
 
-	// 生成带时间戳的文件名
-	filename := fmt.Sprintf("商品销售统计_%s.xlsx", time.Now().Format("2006-01-02_150405"))
+	// 选择保存目录
+	saveDir, err := selectSaveDirectory(ctx)
+	if err != nil {
+		fmt.Printf("❌ 选择保存目录失败: %v\n", err)
+		return
+	}
 
-	err := sm.GenerateExcel(filename)
+	// 生成带时间戳的文件名
+	filename := fmt.Sprintf("%s_%s结账.xlsx", begtime.Format("2006-01-02"), endtime.Format("2006-01-02"))
+	filePath := fmt.Sprintf("%s/%s", saveDir, filename)
+
+	err = sm.GenerateExcel(filePath)
 	if err != nil {
 		fmt.Printf("❌ 生成Excel失败: %v\n", err)
 	} else {
-		fmt.Printf("✅ Excel生成成功！文件: %s\n", filename)
-		fmt.Printf("📁 文件保存在当前目录下\n")
+		fmt.Printf("✅ Excel生成成功！文件: %s\n", filePath)
+		fmt.Printf("📁 文件保存在: %s\n", saveDir)
 	}
 
 	// 显示一些统计信息
@@ -214,12 +226,62 @@ func GetMonthdata(timedate time.Time) {
 
 }
 
+// 选择保存目录
+func selectSaveDirectory(ctx context.Context) (string, error) {
+	// 使用 Wails 运行时的文件夹选择对话框
+	dir, err := runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{
+		Title:                "选择保存目录",
+		DefaultDirectory:     ".",
+		CanCreateDirectories: true,
+	})
+	if err != nil {
+		return "", fmt.Errorf("打开文件夹对话框失败: %w", err)
+	}
+
+	// 检查用户是否取消选择
+	if dir == "" {
+		return "", fmt.Errorf("用户取消选择")
+	}
+
+	// 验证目录是否存在
+	info, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// 尝试创建目录
+			err = os.MkdirAll(dir, 0755)
+			if err != nil {
+				return "", fmt.Errorf("创建目录失败: %w", err)
+			}
+		} else {
+			return "", fmt.Errorf("检查目录失败: %w", err)
+		}
+	} else {
+		// 验证是否为目录
+		if !info.IsDir() {
+			return "", fmt.Errorf("选择的路径不是目录")
+		}
+	}
+
+	// 验证目录是否可写
+	testFile := fmt.Sprintf("%s/.test_write.txt", dir)
+	err = os.WriteFile(testFile, []byte("test"), 0644)
+	if err != nil {
+		return "", fmt.Errorf("目录不可写: %w", err)
+	}
+	// 清理测试文件
+	os.Remove(testFile)
+
+	return dir, nil
+}
+
 // 获取指定日期的数据
 func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 	// 起始日期
 	begindate := time.Date(statime.Year(), statime.Month(), statime.Day(), 0, 0, 0, 0, time.Local)
+	statime = begindate
 	// 截至日期
 	enddate := time.Date(endtime.Year(), endtime.Month(), endtime.Day(), 23, 59, 59, 0, time.Local)
+	endtime = enddate
 
 	// 查询数据库获取日期数据
 	var _list []models.AddressInfo

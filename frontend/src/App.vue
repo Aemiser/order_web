@@ -44,6 +44,10 @@ const fieldData = ref<{
   pbMap: {}
 });
 
+// 数据加载状态
+const isLoadingFieldData = ref(false);
+const fieldDataLoaded = ref(false);
+
 // --- Logic ---
 const analyzeOrders = async (isAppend: boolean = false) => {
   if (!inputText.value.trim()) return;
@@ -399,6 +403,16 @@ const handleUpdateFieldData = (data: {
 }) => {
   fieldData.value = data;
   console.log('字段数据已更新:', data);
+  
+  // 检查PBMap是否有效
+  fieldDataLoaded.value = !!data && !!data.pbMap && Object.keys(data.pbMap).length > 0;
+  isLoadingFieldData.value = false;
+};
+
+// 处理字段数据加载状态
+const handleFieldDataLoading = (isLoading: boolean) => {
+  isLoadingFieldData.value = isLoading;
+  console.log('字段数据加载状态:', isLoading);
 };
 
 
@@ -451,6 +465,7 @@ const handleUpdateFieldData = (data: {
           @data-status="handleCheckoutDataStatus"
           @date-range-change="handleDateRangeChange"
           @update-field-data="handleUpdateFieldData"
+          @field-data-loading="handleFieldDataLoading"
         />
 
         <AppSettingsView
@@ -538,10 +553,12 @@ const handleUpdateFieldData = (data: {
             </button>
             <button 
               @click="handleConfig"
-              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+              :disabled="!fieldDataLoaded || isLoadingFieldData"
+              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <SlidersHorizontal class="w-4 h-4" />
-              <span class="text-xs font-bold">字段配置</span>
+              <div v-if="isLoadingFieldData" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              <SlidersHorizontal v-else class="w-4 h-4" />
+              <span class="text-xs font-bold">{{ isLoadingFieldData ? '加载中...' : '字段配置' }}</span>
             </button>
             <button 
               @click="handleEnterEditMode"
