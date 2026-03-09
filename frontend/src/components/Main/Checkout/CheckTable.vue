@@ -339,6 +339,8 @@ const emit = defineEmits<{
   (e: 'save-unit', unit: string): void;
   (e: 'enter-edit-mode'): void;
   (e: 'exit-edit-mode'): void;
+  (e: 'clear-prices'): void;
+  (e: 'data-status', hasData: boolean): void;
 }>();
 
 // 定义组件属性
@@ -575,6 +577,17 @@ const cancelEditUnit = () => {
   editUnit.value = unitOfMeasure.value;
 };
 
+// 清空所有输入框
+const clearPrices = () => {
+  // 清空商品价格数组
+  productPrices.value = productPrices.value.map(() => '');
+  // 清空规格价格数组
+  editPrices.value = editPrices.value.map(() => '');
+  editPricePerKg.value = editPricePerKg.value.map(() => '');
+  // 触发清空事件
+  emit('clear-prices');
+};
+
 // 监听测试数据变化
 
 // 监听 testData 变化
@@ -589,6 +602,17 @@ if (props.testData) {
   handleGenerateTestData(props.testData);
 }
 
+// 检测表格数据是否为空
+const checkDataStatus = () => {
+  const hasData = tableData.value.length > 0 || products.value.length > 0;
+  emit('data-status', hasData);
+};
+
+// 监听表格数据变化
+watch([tableData, products], () => {
+  checkDataStatus();
+}, { deep: true });
+
 // 初始化数据
 onMounted(async () => {
   try {
@@ -600,8 +624,13 @@ onMounted(async () => {
     tableData.value = transformedData;
     
     console.log('转换后的表格数据:', transformedData);
+    
+    // 检查数据状态
+    checkDataStatus();
   } catch (error) {
     console.error('获取结账数据失败:', error);
+    // 检查数据状态
+    checkDataStatus();
   }
 });
 </script>

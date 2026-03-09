@@ -519,11 +519,11 @@ const resetQuery = async () => {
             </button>
             
             <!-- 省略号 -->
-            <span v-if="currentPage > 3" class="text-slate-600 text-xs mx-1 px-1">...</span>
+            <span v-if="currentPage > 4" class="text-slate-600 text-xs mx-1 px-1">...</span>
             
             <!-- 当前页附近的页码 -->
             <button 
-              v-for="page in Math.max(2, currentPage - 1)"
+              v-for="page in Math.max(2, currentPage - 2)"
               :key="page"
               v-if="page < currentPage && page > 1"
               @click="changePage(page)"
@@ -541,7 +541,7 @@ const resetQuery = async () => {
             
             <!-- 当前页附近的页码 -->
             <button 
-              v-for="page in Math.min(totalPages - 1, currentPage + 1)"
+              v-for="page in Math.min(totalPages - 1, currentPage + 2)"
               :key="page"
               v-if="page > currentPage && page < totalPages"
               @click="changePage(page)"
@@ -551,7 +551,7 @@ const resetQuery = async () => {
             </button>
             
             <!-- 省略号 -->
-            <span v-if="currentPage < totalPages - 2" class="text-slate-600 text-xs mx-1 px-1">...</span>
+            <span v-if="currentPage < totalPages - 3" class="text-slate-600 text-xs mx-1 px-1">...</span>
             
             <!-- 最后一页 -->
             <button 

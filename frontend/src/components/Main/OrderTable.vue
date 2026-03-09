@@ -99,6 +99,49 @@ const filteredValidationErrors = computed(() => {
   delete errors.general;
   return errors;
 });
+
+// 分页相关状态
+const currentPage = ref(1); // 当前页码
+const pageSize = ref(10); // 每页显示条数
+const pageSizeOptions = [5, 10, 20, 25]; // 每页显示条数选项
+
+// 计算总页数
+const totalPages = computed(() => {
+  return Math.ceil(props.orders.length / pageSize.value);
+});
+
+// 计算当前页显示的订单
+const paginatedOrders = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return props.orders.slice(start, end);
+});
+
+// 切换页码
+const changePage = (page: number) => {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+};
+
+// 改变每页显示条数
+const changePageSize = (size: number) => {
+  pageSize.value = size;
+  currentPage.value = 1; // 重置到第一页
+};
+
+// 上一页
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    changePage(currentPage.value - 1);
+  }
+};
+
+// 下一页
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    changePage(currentPage.value + 1);
+  }
+};
 </script>
 
 <template>
@@ -148,7 +191,7 @@ const filteredValidationErrors = computed(() => {
             </tr>
           </thead>
           <tbody class="divide-y divide-white/5">
-            <tr v-for="(order, index) in orders" :key="order.id" :class="[index % 2 === 1 ? 'bg-white/[0.01]' : '', isEditing(order.id) ? 'bg-blue-500/10' : '']">
+            <tr v-for="(order, index) in paginatedOrders" :key="order.id" :class="[index % 2 === 1 ? 'bg-white/[0.01]' : '', isEditing(order.id) ? 'bg-blue-500/10' : '']">
               <!-- 编号 -->
               <td class="px-6 py-4 font-mono text-slate-500">{{ order.id }}</td>
               
@@ -271,7 +314,7 @@ const filteredValidationErrors = computed(() => {
                 </template>
               </td>
             </tr>
-            <tr v-if="orders.length === 0">
+            <tr v-if="paginatedOrders.length === 0">
               <td colspan="7" class="px-6 py-12 text-center text-slate-600">
                 暂无识别数据，请在上方输入订单文本并点击识别
               </td>
@@ -279,6 +322,133 @@ const filteredValidationErrors = computed(() => {
           </tbody>
         </table>
       </div>
+      
+      <!-- Pagination -->
+      <div class="p-6 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+          <!-- 每页显示条数选择器 -->
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-slate-500 font-medium">每页显示：</label>
+            <select 
+              v-model.number="pageSize" 
+              @change="changePageSize(pageSize)"
+              class="px-3 py-2 rounded-lg glass-input text-slate-300 text-xs transition-colors"
+            >
+              <option v-for="option in pageSizeOptions" :key="option" :value="option">{{ option }}</option>
+            </select>
+          </div>
+          
+          <!-- 显示信息 -->
+          <p class="text-xs text-slate-500 font-medium">
+            显示 {{ (currentPage - 1) * pageSize + 1 }} 到 {{ Math.min(currentPage * pageSize, orders.length) }} 条，共 {{ orders.length }} 条记录
+          </p>
+        </div>
+        
+        <!-- 页码导航 -->
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
+          <!-- 上一页按钮 -->
+          <button 
+            @click="prevPage"
+            :disabled="currentPage === 1"
+            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <!-- 页码按钮 -->
+          <template v-if="totalPages <= 5">
+            <button 
+              v-for="page in totalPages" 
+              :key="page"
+              @click="changePage(page)"
+              class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
+              :class="currentPage === page ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
+            >
+              {{ page }}
+            </button>
+          </template>
+          <template v-else>
+            <!-- 第一页 -->
+            <button 
+              @click="changePage(1)"
+              class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
+              :class="currentPage === 1 ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
+            >
+              1
+            </button>
+            
+            <!-- 省略号 -->
+            <span v-if="currentPage > 3" class="text-slate-600 text-xs mx-1 px-1">...</span>
+            
+            <!-- 当前页附近的页码 -->
+            <button 
+              v-for="page in Math.max(2, currentPage - 1)"
+              :key="page"
+              v-if="page < currentPage && page > 1"
+              @click="changePage(page)"
+              class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white text-xs font-bold transition-colors"
+            >
+              {{ page }}
+            </button>
+            
+            <!-- 当前页 -->
+            <button 
+              class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white text-xs font-bold"
+            >
+              {{ currentPage }}
+            </button>
+            
+            <!-- 当前页附近的页码 -->
+            <button 
+              v-for="page in Math.min(totalPages - 1, currentPage + 1)"
+              :key="page"
+              v-if="page > currentPage && page < totalPages"
+              @click="changePage(page)"
+              class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white text-xs font-bold transition-colors"
+            >
+              {{ page }}
+            </button>
+            
+            <!-- 省略号 -->
+            <span v-if="currentPage < totalPages - 2" class="text-slate-600 text-xs mx-1 px-1">...</span>
+            
+            <!-- 最后一页 -->
+            <button 
+              @click="changePage(totalPages)"
+              class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
+              :class="currentPage === totalPages ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
+            >
+              {{ totalPages }}
+            </button>
+          </template>
+          
+          <!-- 下一页按钮 -->
+          <button 
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.glass-input {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+.glass-input:focus {
+  outline: none;
+  border-color: #3B82F6;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+</style>

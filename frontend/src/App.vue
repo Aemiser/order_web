@@ -29,6 +29,7 @@ const isEditMode = ref(false);
 const checkoutResponse = ref<any>(null);
 const isLoading = ref(false);
 const proPriceRequests = ref<any[]>([]);
+const hasCheckoutData = ref(true); // 用于跟踪结账表格是否有数据
 
 // --- Logic ---
 const analyzeOrders = async (isAppend: boolean = false) => {
@@ -291,9 +292,23 @@ const handleSavePrices = async (data?: any[]) => {
 // 处理保存计量单位
 const handleSaveUnit = (unit: string) => {
   console.log('保存计量单位:', unit);
+  // 这里可以添加保存计量单位的逻辑
   // 例如存储到本地存储或发送到后端
   statusMessage.value = '计量单位保存成功';
   setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+};
+
+// 处理清空所有价格输入
+const handleClearPrices = () => {
+  // 清空价格请求数据
+  proPriceRequests.value = [];
+  statusMessage.value = '价格数据已清空';
+  setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+};
+
+// 处理结账表格数据状态变化
+const handleCheckoutDataStatus = (hasData: boolean) => {
+  hasCheckoutData.value = hasData;
 };
 
 // 处理结算账单
@@ -364,6 +379,8 @@ const handleCheckout = async () => {
           @save-unit="handleSaveUnit"
           @enter-edit-mode="handleEnterEditMode"
           @exit-edit-mode="handleExitEditMode"
+          @clear-prices="handleClearPrices"
+          @data-status="handleCheckoutDataStatus"
         />
 
         <AppSettingsView
@@ -416,6 +433,12 @@ const handleCheckout = async () => {
           <!-- 编辑模式下的按钮 -->
           <template v-if="isEditMode">
             <button 
+              @click="handleClearPrices"
+              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+            >
+              <span class="text-xs font-bold">清空</span>
+            </button>
+            <button 
               @click="handleExitEditMode"
               class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
             >
@@ -437,7 +460,8 @@ const handleCheckout = async () => {
           <!-- 非编辑模式下的按钮 -->
           <template v-else>
             <button 
-              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+              :disabled="!hasCheckoutData"
+              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
             >
               <RotateCw class="w-4 h-4" />
               <span class="text-xs font-bold">刷新数据</span>
@@ -451,17 +475,19 @@ const handleCheckout = async () => {
             </button>
             <button 
               @click="handleEnterEditMode"
-              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+              :disabled="!hasCheckoutData"
+              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
             >
               <DollarSign class="w-4 h-4" />
               <span class="text-xs font-bold">编辑金额</span>
             </button>
             <button 
               @click="handleCheckout"
-              class="h-10 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+              :disabled="!hasCheckoutData"
+              class="h-10 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
             >
               <Wallet class="w-4 h-4" />
-              <span class="text-xs">结算账单</span>
+              <span class="text-xs font-bold">财务结算</span>
             </button>
           </template>
         </div>
