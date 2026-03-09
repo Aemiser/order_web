@@ -25,6 +25,8 @@ export function OrderQuery(arg1:order.OrderQueryRequest):Promise<order.OrderQuer
 
 export function OrderRecognition(arg1:string,arg2:enum.RecPreviewType):Promise<Array<ordertutil.ExceladdressInfo>>;
 
+export function SaveCheackToExcel():Promise<void>;
+
 export function SaveToExcel():Promise<string>;
 
 export function SetConfig(arg1:config.ReConf):Promise<void>;

@@ -58,51 +58,93 @@ var proPrice = []ProPriceRequest{}
 var addresinfolist = []models.AddressInfo{}
 
 // 添加结账数据
-func AddcheckoutData(sm *SpecManager, list []models.AddressInfo) {
-
-	var order = &models.Order{}
+func AddcheckoutData(sm *SpecManager) {
+	fmt.Println("====================")
 	// 处理数据,获取总件数
+	fmt.Println("处理数据:", addresinfolist)
+	fmt.Println("====================")
+	var orderlist []models.Order
+
+	// 按日期分组统计销售数据
+	dateProductSpecCount := make(map[string]map[string]map[string]int)
 	for _, info := range addresinfolist {
+		date := info.CreatedAt.Format("2006-01-02")
+		if _, ok := dateProductSpecCount[date]; !ok {
+			dateProductSpecCount[date] = make(map[string]map[string]int)
+		}
+
 		for _, spec := range info.ProductSpecs {
-			for k, v := range gspecsMap {
-				if spec.Name == k {
-					for kk, vv := range v {
-						if spec.Weight == ordertutil.GetNumberInSpec(kk) {
-							order.Quantity = vv
-							order.Date = info.CreatedAt
-							order.ProductName = spec.Name
-							order.Spec = fmt.Sprintf("%d斤", spec.Weight)
-						}
+			productName := spec.Name
+			specName := fmt.Sprintf("%d斤", spec.Weight)
+
+			if _, ok := dateProductSpecCount[date][productName]; !ok {
+				dateProductSpecCount[date][productName] = make(map[string]int)
+			}
+			dateProductSpecCount[date][productName][specName]++
+		}
+	}
+
+	// 生成按日期分组的订单列表
+	for date, productSpecMap := range dateProductSpecCount {
+		fmt.Printf("\n日期: %s\n", date)
+		fmt.Println("商品销售数据:")
+
+		for productName, specMap := range productSpecMap {
+			for specName, count := range specMap {
+				// 查找对应的价格数据
+				var pricePerKg, pricePerItem float64
+				for _, pr := range proPrice {
+					if pr.ProductName == productName && pr.Spec == specName {
+						pricePerKg = pr.PricePerKg
+						pricePerItem = pr.PricePerItem
+						break
 					}
 				}
-			}
-		}
-	}
 
-	// 获取商品单价
-	for _, info := range addresinfolist {
-		for _, spec := range info.ProductSpecs {
-			for _, pr := range proPrice {
-				if pr.ProductName == spec.Name {
-					order.PricePerKg = pr.PricePerKg
-					order.PricePerItem = pr.PricePerItem
+				// 计算金额
+				totalAmount := float64(count) * pricePerItem
+
+				// 打印销售数据
+				fmt.Printf("  - 商品: %s, 规格: %s, 数量: %d, 单价: %.2f元/件, 总金额: %.2f元\n",
+					productName, specName, count, pricePerItem, totalAmount)
+
+				// 创建订单并添加到列表
+				dateTime, _ := time.Parse("2006-01-02", date)
+				order := models.Order{
+					Date:         dateTime,
+					ProductName:  productName,
+					Spec:         specName,
+					Quantity:     count,
+					PricePerKg:   pricePerKg,
+					PricePerItem: pricePerItem,
 				}
+				orderlist = append(orderlist, order)
+				fmt.Println("orderlist", orderlist)
+				// 添加到规格管理器
+				sm.AddOrder(order)
 			}
 		}
 	}
 
-	sm.AddOrder(*order)
-
+	// 打印总订单列表
+	fmt.Println("\n====================")
+	fmt.Println("生成的总订单列表:")
+	for _, order := range orderlist {
+		fmt.Printf("日期: %s, 商品: %s, 规格: %s, 数量: %d, 单价: %.2f元/件, 总金额: %.2f元\n",
+			order.Date.Format("2006-01-02"), order.ProductName, order.Spec, order.Quantity,
+			order.PricePerItem, float64(order.Quantity)*order.PricePerItem)
+	}
+	fmt.Println("====================")
 }
 
-func Checkout(timedate time.Time) {
+func Checkout() {
 	fmt.Println("========== 商品销售统计Excel生成器 ==========")
 
 	// 创建规格管理器
 	sm := NewSpecManager()
 
 	// 添加数据
-	AddcheckoutData(sm, addresinfolist)
+	AddcheckoutData(sm)
 	fmt.Println(sm.Orders)
 	// 打印统计摘要
 	sm.PrintSummary()
@@ -143,7 +185,6 @@ func Checkout(timedate time.Time) {
 	for _, date := range dates {
 		fmt.Printf("  - %s\n", date)
 	}
-
 }
 
 // 获取指定月份数据
@@ -335,7 +376,7 @@ func SetFieldList(mapp map[string][]string) {
 
 // 设置金额
 func SetPrice(_list []ProPriceRequest) CheckoutResponse {
-
+	proPrice = _list
 	fmt.Println("_list", _list)
 	var pricePerkgRow, pricePerItemRow, totalAmountRow []float64
 	// 获取该商品 ->规格的总件数
@@ -393,6 +434,7 @@ func SetPrice(_list []ProPriceRequest) CheckoutResponse {
 	checkoutresp.PricePerKgRow = pricePerkgRow
 	checkoutresp.PricePerItemRow = pricePerItemRow
 	checkoutresp.TotalAmountRow = totalAmountRow
+
 	fmt.Println("checkoutresp", checkoutresp)
 	// 为execl添加数据
 	return checkoutresp

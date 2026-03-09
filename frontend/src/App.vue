@@ -291,10 +291,31 @@ const handleSavePrices = async (data?: any[]) => {
 // 处理保存计量单位
 const handleSaveUnit = (unit: string) => {
   console.log('保存计量单位:', unit);
-  // 这里可以添加保存计量单位的逻辑
   // 例如存储到本地存储或发送到后端
   statusMessage.value = '计量单位保存成功';
   setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+};
+
+// 处理结算账单
+const handleCheckout = async () => {
+  try {
+    // 显示加载状态
+    isLoading.value = true;
+    statusMessage.value = '正在生成财务账单...';
+    
+    // 调用后端的 SaveCheackToExcel 方法
+    const response = await window['go']['main']['App']['SaveCheackToExcel']();
+    console.log('结算账单成功:', response);
+    statusMessage.value = '财务账单生成成功';
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+  } catch (error) {
+    console.error('结算账单失败:', error);
+    statusMessage.value = '生成财务账单失败，请重试';
+    setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
+  } finally {
+    // 隐藏加载状态
+    isLoading.value = false;
+  }
 };
 
 
@@ -436,6 +457,7 @@ const handleSaveUnit = (unit: string) => {
               <span class="text-xs font-bold">编辑金额</span>
             </button>
             <button 
+              @click="handleCheckout"
               class="h-10 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
             >
               <Wallet class="w-4 h-4" />

@@ -5,7 +5,7 @@
         <thead>
           <tr class="product-group">
             <th>日期 / 产品</th>
-            <th v-for="product in products" :key="product.name" :colspan="product.specs.length" class="product-divider">
+            <th v-for="product in products" :key="product.name" :colspan="product.specs.length">
               {{ product.name }}
             </th>
           </tr>
@@ -23,7 +23,7 @@
           <tr v-for="(row, index) in tableData" :key="index" class="data-row">
             <td class="date-column">{{ row.date }}</td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`${productIndex}-${specIndex}`" class="spec-cell" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+              <td v-for="(spec, specIndex) in product.specs" :key="`${productIndex}-${specIndex}`" class="spec-cell">
                 <template v-if="row.values && row.values[getSpecIndex(productIndex, specIndex)] !== '—'">
                   <span class="spec-value">{{ row.values[getSpecIndex(productIndex, specIndex)] }}</span>
                 </template>
@@ -38,7 +38,7 @@
           <tr class="total-row">
             <td class="total-label">总计 (件)</td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`total-${productIndex}-${specIndex}`" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+              <td v-for="(spec, specIndex) in product.specs" :key="`total-${productIndex}-${specIndex}`">
                 {{ totalRow[getSpecIndex(productIndex, specIndex)] }}
               </td>
             </template>
@@ -85,7 +85,7 @@
               </template>
             </td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`kg-${productIndex}-${specIndex}`" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+              <td v-for="(spec, specIndex) in product.specs" :key="`kg-${productIndex}-${specIndex}`">
                 <template v-if="isEditMode">
                   <input 
                     type="text" 
@@ -106,7 +106,7 @@
           <tr class="price-row">
             <td class="price-label">元/件</td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`price-${productIndex}-${specIndex}`" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+              <td v-for="(spec, specIndex) in product.specs" :key="`price-${productIndex}-${specIndex}`">
                 <template v-if="isEditMode">
                   <input 
                     type="text" 
@@ -127,7 +127,7 @@
           <tr class="amount-row">
             <td class="amount-label">总金额 (元)</td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`amount-${productIndex}-${specIndex}`" :class="{ 'product-divider': productIndex > 0 && specIndex === 0 }">
+              <td v-for="(spec, specIndex) in product.specs" :key="`amount-${productIndex}-${specIndex}`">
                 {{ totalAmountRow[getSpecIndex(productIndex, specIndex)] }}
               </td>
             </template>
@@ -577,7 +577,6 @@ th {
   font-size: 0.95rem;
   padding: 18px 12px;
   white-space: nowrap;
-  border-bottom: 2px solid var(--border-light);
   text-align: center;
 }
 
@@ -586,34 +585,18 @@ th {
   color: var(--accent-blue);
   font-size: 1rem;
   padding: 14px 8px;
-  border-right: 2px solid #3B82F6;
-}
-
-.product-group th:last-child {
-  border-right: none;
 }
 
 .spec-header th {
   background: rgba(255, 255, 255, 0.01);
   color: var(--accent-teal);
-  border-right: 2px solid #3B82F6;
-}
-
-.spec-header th:last-child {
-  border-right: none;
 }
 
 td {
   padding: 14px 12px;
-  border-bottom: 1px solid var(--border-lighter);
-  border-right: 2px solid #3B82F6;
   text-align: center;
   vertical-align: middle;
   color: var(--text-primary);
-}
-
-td:last-child {
-  border-right: none;
 }
 
 .data-row:hover td {
@@ -627,7 +610,6 @@ td:last-child {
   text-align: left;
   padding-left: 18px;
   font-size: 1rem;
-  border-right: 1px solid var(--border-light);
   position: sticky;
   left: 0;
   background-color: var(--bg-card);
@@ -663,8 +645,6 @@ td:last-child {
 
 .total-row td {
   background: rgba(59, 130, 246, 0.05);
-  border-top: 2px solid var(--border-light);
-  border-bottom: 2px solid var(--border-light);
   font-weight: 600;
   color: var(--accent-blue);
 }
@@ -685,7 +665,6 @@ td:last-child {
 .price-row td {
   background: rgba(20, 184, 166, 0.03);
   color: var(--accent-teal);
-  border-bottom: 1px dashed var(--border-light);
 }
 
 .price-label {
@@ -702,7 +681,6 @@ td:last-child {
 
 .amount-row td {
   background: rgba(139, 92, 246, 0.05);
-  border-top: 2px solid var(--border-light);
   font-weight: 600;
   color: #A78BFA;
 }
@@ -714,10 +692,7 @@ td:last-child {
   padding-left: 18px;
 }
 
-/* 产品分割线 */
-.product-divider {
-  border-left: 2px solid #3B82F6;
-}
+
 
 /* 底部图例 */
 .legend-section {

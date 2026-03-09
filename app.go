@@ -131,3 +131,7 @@ func (a *App) SetPriceData(req []checkout.ProPriceRequest) checkout.CheckoutResp
 func (a *App) GetDaydata(statime time.Time, endtime time.Time) checkout.CheckoutResponse {
 	return checkout.GetDaydata(statime, endtime)
 }
+
+func (a *App) SaveCheackToExcel() {
+	checkout.Checkout()
+}

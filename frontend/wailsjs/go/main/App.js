@@ -38,6 +38,10 @@ export function OrderRecognition(arg1, arg2) {
   return window['go']['main']['App']['OrderRecognition'](arg1, arg2);
 }
 
+export function SaveCheackToExcel() {
+  return window['go']['main']['App']['SaveCheackToExcel']();
+}
+
 export function SaveToExcel() {
   return window['go']['main']['App']['SaveToExcel']();
 }
