@@ -85,19 +85,19 @@
               </template>
             </td>
             <template v-for="(product, productIndex) in products" :key="product.name">
-              <td v-for="(spec, specIndex) in product.specs" :key="`kg-${productIndex}-${specIndex}`" :style="{ color: getProductColor(product.name) }">
+              <td :colspan="product.specs.length" :style="{ color: getProductColor(product.name)}">
                 <template v-if="isEditMode">
                   <input 
                     type="text" 
-                    :value="editPricePerKg[getSpecIndex(productIndex, specIndex)] || ''"
-                    @input="handlePricePerKgChange(getSpecIndex(productIndex, specIndex), ($event.target as HTMLInputElement).value)"
-                    :style="{ color: getProductColor(product.name), borderColor: getProductColor(product.name) + '40' }"
-                    class="w-full bg-white/5 border rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
+                    :value="productPrices[productIndex] || ''"
+                    @input="handleProductPriceChange(productIndex, ($event.target as HTMLInputElement).value)"
+                    :style="{ color: getProductColor(product.name), borderColor: getProductColor(product.name) + '40', width: '100%', boxSizing: 'border-box' }"
+                    class="bg-white/5 border rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
                     placeholder="0.00"
                   />
                 </template>
                 <template v-else>
-                  {{ pricePerKgRow[getSpecIndex(productIndex, specIndex)] }}
+                  <div style="padding: 14px 12px; text-align: center;">{{ pricePerKgRow[getSpecIndex(productIndex, 0)] }}</div>
                 </template>
               </td>
             </template>
@@ -230,6 +230,7 @@ const isEditMode = ref(false)
 // 本地编辑的价格数据
 const editPrices = ref<(number | string)[]>([])
 const editPricePerKg = ref<(number | string)[]>([])
+const productPrices = ref<(number | string)[]>([])
 
 // 计量单位状态
 const unitOfMeasure = ref('元/斤')
@@ -360,10 +361,24 @@ watch(() => props.isEditMode, (newVal) => {
       // 进入编辑模式时初始化编辑价格数据
       editPrices.value = [...pricePerItemRow.value];
       editPricePerKg.value = [...pricePerKgRow.value];
+      
+      // 初始化商品价格数组，每个商品一个价格
+      productPrices.value = [];
+      let specIndex = 0;
+      products.value.forEach(product => {
+        // 取该商品第一个规格的价格作为默认值
+        if (product.specs.length > 0 && editPricePerKg.value[specIndex]) {
+          productPrices.value.push(editPricePerKg.value[specIndex]);
+        } else {
+          productPrices.value.push('');
+        }
+        specIndex += product.specs.length;
+      });
     } else {
       // 退出编辑模式时重置编辑价格数据
       editPrices.value = [];
       editPricePerKg.value = [];
+      productPrices.value = [];
     }
   }
 }, { immediate: true });
@@ -380,6 +395,21 @@ watch(() => props.checkoutResponse, (newVal) => {
     pricePerKgRow.value = newVal.PricePerKgRow || [];
     pricePerItemRow.value = newVal.PricePerItemRow || [];
     totalAmountRow.value = newVal.TotalAmountRow || [];
+    
+    // 如果当前处于编辑模式，重新初始化productPrices数组
+    if (isEditMode.value) {
+      productPrices.value = [];
+      let specIndex = 0;
+      products.value.forEach(product => {
+        // 取该商品第一个规格的价格作为默认值
+        if (product.specs.length > 0 && pricePerKgRow.value[specIndex]) {
+          productPrices.value.push(pricePerKgRow.value[specIndex]);
+        } else {
+          productPrices.value.push('');
+        }
+        specIndex += product.specs.length;
+      });
+    }
   }
 }, { deep: true });
 
@@ -408,6 +438,33 @@ const exitEditMode = () => {
   // 重置编辑价格数据
   editPrices.value = [];
   editPricePerKg.value = [];
+};
+
+// 处理商品价格变化
+const handleProductPriceChange = (productIndex: number, value: string) => {
+  // 只允许输入数字和小数点
+  const numericValue = value.replace(/[^0-9.]/g, '');
+  // 确保只有一个小数点
+  const parts = numericValue.split('.');
+  if (parts.length > 2) {
+    return;
+  }
+  // 限制小数点后两位
+  if (parts.length === 2 && parts[1].length > 2) {
+    return;
+  }
+  productPrices.value[productIndex] = numericValue;
+  
+  // 将商品价格分配给该商品的所有规格
+  let specIndex = 0;
+  for (let i = 0; i < productIndex; i++) {
+    specIndex += products.value[i].specs.length;
+  }
+  
+  const product = products.value[productIndex];
+  for (let i = 0; i < product.specs.length; i++) {
+    editPricePerKg.value[specIndex + i] = numericValue;
+  }
 };
 
 // 保存编辑的价格
