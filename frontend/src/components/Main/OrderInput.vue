@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Sparkles, Loader2 } from 'lucide-vue-next';
+import { ref, onMounted } from 'vue';
+import { Sparkles, Loader2, ChevronDown, ChevronUp } from 'lucide-vue-next';
 
 defineProps<{
   inputText: string;
@@ -10,11 +10,62 @@ defineProps<{
 // 模式选择：false 为"重来"，true 为"追加"
 const isAppendMode = ref(false);
 
+// AI模型选择
+const aiModels = ref<Map<string, number>>(new Map());
+const selectedModel = ref<string>('');
+const isDropdownOpen = ref(false);
+const isLoadingModels = ref(false);
+const modelError = ref('');
+
 defineEmits<{
   (e: 'update:inputText', value: string): void;
   (e: 'clear'): void;
-  (e: 'analyze', isAppend: boolean): void;
+  (e: 'analyze', isAppend: boolean, modelId: number): void;
 }>();
+
+// 获取AI模型列表
+const fetchAIModels = async () => {
+  isLoadingModels.value = true;
+  modelError.value = '';
+  try {
+    const models = await window['go']['main']['App']['GetAIModel']();
+    aiModels.value = new Map(Object.entries(models));
+    // 默认选择第一个模型
+    if (aiModels.value.size > 0) {
+      selectedModel.value = Array.from(aiModels.value.keys())[0];
+    }
+  } catch (error) {
+    console.error('获取AI模型失败:', error);
+    modelError.value = '获取模型列表失败，请重试';
+  } finally {
+    isLoadingModels.value = false;
+  }
+};
+
+// 切换下拉菜单
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+// 选择模型
+const selectModel = (model: string) => {
+  selectedModel.value = model;
+  isDropdownOpen.value = false;
+};
+
+// 处理点击外部关闭下拉菜单
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.ai-model-selector')) {
+    isDropdownOpen.value = false;
+  }
+};
+
+// 生命周期钩子：组件挂载时获取AI模型
+onMounted(() => {
+  fetchAIModels();
+  document.addEventListener('click', handleClickOutside);
+});
 </script>
 
 <template>
@@ -51,9 +102,43 @@ defineEmits<{
         >
           清空输入
         </button>
+        <!-- AI模型选择器 -->
+        <div class="ai-model-selector relative">
+          <div 
+            @click="toggleDropdown"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-sm font-medium cursor-pointer transition-colors"
+          >
+            <span v-if="isLoadingModels">加载中...</span>
+            <span v-else-if="selectedModel">AI模型：{{ selectedModel }}</span>
+            <span v-else>选择模型</span>
+            <ChevronDown v-if="!isDropdownOpen" class="w-4 h-4" />
+            <ChevronUp v-else class="w-4 h-4" />
+          </div>
+          
+          <!-- 下拉菜单 -->
+          <div 
+            v-if="isDropdownOpen && aiModels.size > 0"
+            class="absolute top-full mt-2 w-48 bg-[#1E2228] border border-white/10 rounded-lg shadow-lg z-10"
+          >
+            <div 
+              v-for="model in Array.from(aiModels.keys())" 
+              :key="model"
+              @click="selectModel(model)"
+              class="px-4 py-2 text-sm text-slate-300 hover:bg-white/5 cursor-pointer transition-colors"
+              :class="{ 'bg-blue-600/20 text-blue-400': model === selectedModel }"
+            >
+              {{ model }}
+            </div>
+          </div>
+          
+          <!-- 错误提示 -->
+          <div v-if="modelError" class="absolute top-full mt-2 w-48 text-xs text-red-400">
+            {{ modelError }}
+          </div>
+        </div>
         <button 
-          @click="$emit('analyze', isAppendMode)"
-          :disabled="isAnalyzing || !inputText.trim()"
+          @click="$emit('analyze', [isAppendMode, aiModels.get(selectedModel) || 0])"
+          :disabled="isAnalyzing || !inputText.trim() || !selectedModel"
           class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all"
         >
           <template v-if="isAnalyzing">

@@ -1,11 +1,13 @@
 package ordertutil
 
 import (
+	"encoding/json"
 	"fmt"
 	"order_server/go/global"
 	"order_server/go/models"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 func Specprocessing(input string) (models.ProductSpecsJSON, error) {
@@ -102,4 +104,26 @@ func GetNumberInSpec(s string) int {
 		return num
 	}
 	return 0
+}
+
+func RespBodyToJson(content string) ([]models.AddressInfo, error) {
+
+	// 清理可能存在的Markdown代码块标记
+	content = strings.TrimPrefix(content, "```json")
+	content = strings.TrimPrefix(content, "```")
+	content = strings.TrimSuffix(content, "```")
+	content = strings.TrimSpace(content)
+
+	// 解析JSON数组
+	var addressList []models.AddressInfo
+	if err := json.Unmarshal([]byte(content), &addressList); err != nil {
+		// 尝试解析为单个对象
+		var singleAddr models.AddressInfo
+		if err2 := json.Unmarshal([]byte(content), &singleAddr); err2 == nil {
+			addressList = []models.AddressInfo{singleAddr}
+		} else {
+			return nil, fmt.Errorf("地址信息解析失败: %w\n原始返回: %s", err, content)
+		}
+	}
+	return addressList, nil
 }

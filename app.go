@@ -6,7 +6,6 @@ import (
 	"order_server/go/global"
 	"order_server/go/models/enum"
 	"order_server/go/server/checkout"
-	"order_server/go/server/config"
 	alog "order_server/go/server/log"
 	"order_server/go/server/order"
 	ordertutil "order_server/go/utils/order"
@@ -37,20 +36,25 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
+// 获取已配置的大模型
+func (a *App) GetAIModel() map[string]int {
+	return global.AiMap
+}
+
 // 订单识别
-func (a *App) OrderRecognition(context string, model enum.RecPreviewType) []ordertutil.ExceladdressInfo {
-	return order.OrderRec(context, model)
+func (a *App) OrderRecognition(context string, aimodel enum.AIModelType, model enum.RecPreviewType) []ordertutil.ExceladdressInfo {
+	return order.OrderRec(context, aimodel, model)
 }
 
-// 获取配置消息
-func (a *App) GetConfig() config.ReConf {
-	return config.GetConf()
-}
-
-// 修改配置消息
-func (a *App) SetConfig(conf config.ReConf) {
-	config.SetConf(conf)
-}
+//// 获取配置消息
+//func (a *App) GetConfig() config.ReConf {
+//	return config.GetConf()
+//}
+//
+//// 修改配置消息
+//func (a *App) SetConfig(conf config.ReConf) {
+//	config.SetConf(conf)
+//}
 
 // 查询订单详情
 func (a *App) OrderQuery(oq order.OrderQueryRequest) order.OrderQueryResponse {

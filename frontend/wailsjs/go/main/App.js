@@ -10,12 +10,12 @@ export function DeletepreviewData(arg1) {
   return window['go']['main']['App']['DeletepreviewData'](arg1);
 }
 
-export function GetChackDaydata(arg1, arg2) {
-  return window['go']['main']['App']['GetChackDaydata'](arg1, arg2);
+export function GetAIModel() {
+  return window['go']['main']['App']['GetAIModel']();
 }
 
-export function GetConfig() {
-  return window['go']['main']['App']['GetConfig']();
+export function GetChackDaydata(arg1, arg2) {
+  return window['go']['main']['App']['GetChackDaydata'](arg1, arg2);
 }
 
 export function GetDaydata(arg1, arg2) {
@@ -34,8 +34,8 @@ export function OrderQuery(arg1) {
   return window['go']['main']['App']['OrderQuery'](arg1);
 }
 
-export function OrderRecognition(arg1, arg2) {
-  return window['go']['main']['App']['OrderRecognition'](arg1, arg2);
+export function OrderRecognition(arg1, arg2, arg3) {
+  return window['go']['main']['App']['OrderRecognition'](arg1, arg2, arg3);
 }
 
 export function SaveCheackToExcel() {
@@ -44,10 +44,6 @@ export function SaveCheackToExcel() {
 
 export function SaveToExcel() {
   return window['go']['main']['App']['SaveToExcel']();
-}
-
-export function SetConfig(arg1) {
-  return window['go']['main']['App']['SetConfig'](arg1);
 }
 
 export function SetPriceData(arg1) {

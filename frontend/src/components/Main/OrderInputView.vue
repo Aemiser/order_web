@@ -13,7 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:inputText', value: string): void;
   (e: 'clear'): void;
-  (e: 'analyze', isAppend: boolean): void;
+  (e: 'analyze', isAppend: boolean, modelId: number): void;
   (e: 'removeOrder', id: string): void;
   (e: 'clearAllOrders'): void;
   (e: 'refreshData'): void;
@@ -66,7 +66,7 @@ onUnmounted(() => {
         :isAnalyzing="isAnalyzing"
         @update:inputText="$emit('update:inputText', $event)"
         @clear="$emit('clear')"
-        @analyze="$emit('analyze', $event)"
+        @analyze="$emit('analyze', $event[0], $event[1])"
       />
     </div>
 

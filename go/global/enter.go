@@ -16,4 +16,5 @@ var (
 	Db               *gorm.DB
 	AddressList      []models.AddressInfo
 	ProductBelongMap = map[string][]string{}
+	AiMap            = map[string]int{}
 )

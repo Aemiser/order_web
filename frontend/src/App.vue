@@ -49,17 +49,22 @@ const isLoadingFieldData = ref(false);
 const fieldDataLoaded = ref(false);
 
 // --- Logic ---
-const analyzeOrders = async (isAppend: boolean = false) => {
+const analyzeOrders = async (isAppend: boolean = false, modelId: number = 0) => {
   if (!inputText.value.trim()) return;
   
   isAnalyzing.value = true;
   statusMessage.value = '正在识别订单数据...';
   
   try {
-    // 调用后端的OrderRecognition方法，第二个参数为模式：0-重来，1-追加
-    const model = isAppend ? 1 : 0;
-    const result = await OrderRecognition(inputText.value, model);
-    console.log(result);
+    // 调用后端的OrderRecognition方法，参数：上下文，AI模型ID，预览类型
+    const previewType = isAppend ? 1 : 0;
+    console.log('调用OrderRecognition:', {
+      context: inputText.value,
+      modelId: modelId,
+      previewType: previewType
+    });
+    const result = await OrderRecognition(inputText.value, modelId, previewType);
+    console.log('识别结果:', result);
     // 转换后端返回的数据为Order类型
     const newOrders: Order[] = [];
     

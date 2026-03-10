@@ -4,6 +4,6 @@ type Config struct {
 	Log      Log      `yaml:"log"`
 	DB       []DB     `yaml:"db"`
 	Email    Email    `yaml:"email"`
-	Deepseek Deepseek `yaml:"deepseek"`
+	AiModel  AiModel  `yaml:"aimodel"`
 	SavePath SavePath `yaml:"savePath"`
 }
