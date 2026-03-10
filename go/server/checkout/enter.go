@@ -10,6 +10,7 @@ import (
 	time2 "order_server/go/utils/time"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"time"
 
@@ -324,12 +325,30 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 	}
 	gspecsMap = specsMap
 
+	// 解析规格中的数值部分
+	parseSpecValue := func(spec string) int {
+		re, err := regexp.Compile(`\d+`)
+		if err != nil {
+			return 0
+		}
+		numberStr := re.FindString(spec)
+		number, err := strconv.Atoi(numberStr)
+		if err != nil {
+			return 0
+		}
+		return number
+	}
+
 	// 转换为切片格式
 	ProSPecsMap := make(map[string][]string)
 	for k, v := range specsMap {
 		for spec := range v {
 			ProSPecsMap[k] = append(ProSPecsMap[k], spec)
 		}
+		// 对规格进行降序排序
+		sort.Slice(ProSPecsMap[k], func(i, j int) bool {
+			return parseSpecValue(ProSPecsMap[k][i]) > parseSpecValue(ProSPecsMap[k][j])
+		})
 	}
 
 	// Map转List
@@ -451,12 +470,12 @@ func SetPrice(_list []ProPriceRequest) CheckoutResponse {
 						// 获取规格的斤数
 						re, err := regexp.Compile(`\d+`)
 						if err != nil {
-							logrus.Errorf("设置金额获取规格的斤数error", err)
+							logrus.Errorf("设置金额获取规格的斤数error: %v", err)
 						}
 						number := re.FindString(spec)
 						num, err := strconv.Atoi(number)
 						if err != nil {
-							logrus.Errorf("设置金额转换error", err)
+							logrus.Errorf("设置金额转换error: %v", err)
 						}
 
 						if _list[i].PricePerItem == 0.00 {
