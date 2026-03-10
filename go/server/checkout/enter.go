@@ -277,16 +277,16 @@ func selectSaveDirectory(ctx context.Context) (string, error) {
 // 获取指定日期的数据
 func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 	// 起始日期
-	begindate := time.Date(statime.Year(), statime.Month(), statime.Day(), 0, 0, 0, 0, time.Local)
+	begindate := time.Date(statime.Year(), statime.Month(), statime.Day()+1, 0, 0, 0, 0, time.Local)
 	statime = begindate
 	// 截至日期
-	enddate := time.Date(endtime.Year(), endtime.Month(), endtime.Day(), 23, 59, 59, 0, time.Local)
+	enddate := time.Date(endtime.Year(), endtime.Month(), endtime.Day()+1, 23, 59, 59, 0, time.Local)
 	endtime = enddate
 
 	// 查询数据库获取日期数据
 	var _list []models.AddressInfo
 	var count int64
-	global.Db.Debug().Model(&_list).Count(&count).Where("created_at >= ? AND created_at <= ?", begindate, enddate).Find(&_list)
+	global.Db.Debug().Model(&_list).Count(&count).Where("created_at >= ? AND created_at <= ?", begindate, enddate).Find(&_list).Order("created_at")
 	addresinfolist = _list
 	// 检查是否存在新商品
 	newSpecList := ordertutil.Specchecking(_list)

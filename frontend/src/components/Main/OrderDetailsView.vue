@@ -637,7 +637,7 @@ input[type="date"].border-red-400 {
 :deep(.el-input__wrapper) {
   background-color: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   transition: all 0.2s ease;
   box-sizing: border-box !important;
 }

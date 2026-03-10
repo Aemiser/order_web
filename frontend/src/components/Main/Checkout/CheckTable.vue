@@ -184,6 +184,10 @@ const colorPalette = [
   '#06B6D4', // 青色
   '#F97316'  // 深橙色
 ];
+// 存储已分配颜色的Map
+const productColorMap = new Map<string, string>();
+// 记录已使用的颜色索引
+const usedColorIndices = new Set<number>();
 
 // 根据商品名称生成哈希值
 const getProductHash = (productName: string): number => {
@@ -196,11 +200,34 @@ const getProductHash = (productName: string): number => {
   return Math.abs(hash);
 };
 
-// 获取商品对应的颜色
 const getProductColor = (productName: string): string => {
+  // 如果已经为该产品分配过颜色，直接返回
+  if (productColorMap.has(productName)) {
+    return productColorMap.get(productName)!;
+  }
+
+  // 获取产品hash
   const hash = getProductHash(productName);
-  const index = hash % colorPalette.length;
-  return colorPalette[index];
+
+  // 尝试找到未使用的颜色
+  let index = hash % colorPalette.length;
+  let attempts = 0;
+  const maxAttempts = colorPalette.length * 2; // 最大尝试次数
+
+  // 如果当前颜色已被使用，尝试寻找下一个可用颜色
+  while (usedColorIndices.has(index) && attempts < maxAttempts) {
+    index = (index + 1) % colorPalette.length;
+    attempts++;
+  }
+
+  // 获取颜色
+  const color = colorPalette[index];
+
+  // 记录已使用的颜色和产品映射
+  usedColorIndices.add(index);
+  productColorMap.set(productName, color);
+
+  return color;
 };
 
 // 商品列表

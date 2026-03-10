@@ -511,8 +511,8 @@ const handleFieldDataLoading = (isLoading: boolean) => {
             <span class="w-2 h-2 rounded-full bg-blue-600"></span>
             <span>已选定 {{ selectedDays }} 天数据</span>
           </div>
-          <div class="w-px h-4 bg-white/10"></div>
-          <p>总成交品种: <span class="text-white font-bold">14项</span></p>
+<!--          <div class="w-px h-4 bg-white/10"></div>-->
+<!--          <p>总成交品种: <span class="text-white font-bold">14项</span></p>-->
         </div>
         <div class="flex items-center gap-3">
           <!-- 编辑模式下的按钮 -->
