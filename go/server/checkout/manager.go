@@ -154,73 +154,73 @@ func (sm *SpecManager) GenerateExcel(filename string) error {
 		col += len(specs)
 	}
 
-	// 第3行：设置价格信息（每斤/元 和 每件/元）
-	col = 2 // 重置列
-	priceRow := 3
-	priceInfoStyle, _ := f.NewStyle(&excelize.Style{
-		Fill: excelize.Fill{
-			Type:    "pattern",
-			Color:   []string{"#FFE699"},
-			Pattern: 1,
-		},
-		Alignment: &excelize.Alignment{
-			Horizontal: "center",
-			WrapText:   true, // 允许文本换行
-		},
-	})
-
-	for _, product := range products {
-		specs := sm.ProductMap[product].Specs
-		productInfo := sm.ProductMap[product]
-
-		for i, spec := range specs {
-			cell := execl.GetColumnLetter(col+i) + strconv.Itoa(priceRow)
-
-			// 获取价格信息
-			pricePerKg := productInfo.PricePerKgMap[spec]
-			pricePerItem := productInfo.PricePerItemMap[spec]
-
-			// 显示价格信息
-			priceText := ""
-			if pricePerKg > 0 {
-				priceText += fmt.Sprintf("每斤:¥%.2f", pricePerKg)
-			}
-			if pricePerItem > 0 {
-				if priceText != "" {
-					priceText += "\n"
-				}
-				priceText += fmt.Sprintf("每件:¥%.2f", pricePerItem)
-			}
-			if priceText == "" {
-				priceText = "未设置"
-			}
-
-			f.SetCellValue(sheetName, cell, priceText)
-			f.SetCellStyle(sheetName, cell, cell, priceInfoStyle)
-
-			// 设置行高适应多行文本
-			f.SetRowHeight(sheetName, priceRow, 30)
-		}
-		col += len(specs)
-	}
-
-	// 第4行：设置金额标题
-	amountTitleRow := 4
-	col = 2 // 重置列
-	for _, product := range products {
-		specs := sm.ProductMap[product].Specs
-		for i := range specs {
-			cell := execl.GetColumnLetter(col+i) + strconv.Itoa(amountTitleRow)
-			f.SetCellValue(sheetName, cell, "金额(元)")
-			f.SetCellStyle(sheetName, cell, cell, styles["specHeader"])
-		}
-		col += len(specs)
-	}
-
+	//// 第3行：设置价格信息（每斤/元 和 每件/元）
+	//col = 2 // 重置列
+	//priceRow := 3
+	//priceInfoStyle, _ := f.NewStyle(&excelize.Style{
+	//	Fill: excelize.Fill{
+	//		Type:    "pattern",
+	//		Color:   []string{"#FFE699"},
+	//		Pattern: 1,
+	//	},
+	//	Alignment: &excelize.Alignment{
+	//		Horizontal: "center",
+	//		WrapText:   true, // 允许文本换行
+	//	},
+	//})
+	//
+	//for _, product := range products {
+	//	specs := sm.ProductMap[product].Specs
+	//	productInfo := sm.ProductMap[product]
+	//
+	//	for i, spec := range specs {
+	//		cell := execl.GetColumnLetter(col+i) + strconv.Itoa(priceRow)
+	//
+	//		// 获取价格信息
+	//		pricePerKg := productInfo.PricePerKgMap[spec]
+	//		pricePerItem := productInfo.PricePerItemMap[spec]
+	//
+	//		// 显示价格信息
+	//		priceText := ""
+	//		if pricePerKg > 0 {
+	//			priceText += fmt.Sprintf("每斤:¥%.2f", pricePerKg)
+	//		}
+	//		if pricePerItem > 0 {
+	//			if priceText != "" {
+	//				priceText += "\n"
+	//			}
+	//			priceText += fmt.Sprintf("每件:¥%.2f", pricePerItem)
+	//		}
+	//		if priceText == "" {
+	//			priceText = "未设置"
+	//		}
+	//
+	//		f.SetCellValue(sheetName, cell, priceText)
+	//		f.SetCellStyle(sheetName, cell, cell, priceInfoStyle)
+	//
+	//		// 设置行高适应多行文本
+	//		f.SetRowHeight(sheetName, priceRow, 30)
+	//	}
+	//	col += len(specs)
+	//}
+	//
+	//// 第4行：设置金额标题
+	//amountTitleRow := 4
+	//col = 2 // 重置列
+	//for _, product := range products {
+	//	specs := sm.ProductMap[product].Specs
+	//	for i := range specs {
+	//		cell := execl.GetColumnLetter(col+i) + strconv.Itoa(amountTitleRow)
+	//		f.SetCellValue(sheetName, cell, "金额(元)")
+	//		f.SetCellStyle(sheetName, cell, cell, styles["specHeader"])
+	//	}
+	//	col += len(specs)
+	//}
+	//
 	// 日期列合并4行（标题行）
-	f.MergeCell(sheetName, "A1", "A4")
+	f.MergeCell(sheetName, "A1", "A2")
 	f.SetCellValue(sheetName, "A1", "日期")
-	f.SetCellStyle(sheetName, "A1", "A4", styles["dateHeader"])
+	f.SetCellStyle(sheetName, "A1", "A2", styles["dateHeader"])
 
 	// 设置垂直居中样式
 	verticalCenterStyle, _ := f.NewStyle(&excelize.Style{
@@ -232,7 +232,7 @@ func (sm *SpecManager) GenerateExcel(filename string) error {
 	f.SetCellStyle(sheetName, "A1", "A4", verticalCenterStyle)
 
 	// 填充数据 - 从第5行开始
-	dataStartRow := 5
+	dataStartRow := 3
 	// 先填充数量数据
 	for rowIdx, dateStr := range dates {
 		row := rowIdx + dataStartRow

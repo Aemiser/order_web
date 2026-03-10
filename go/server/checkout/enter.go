@@ -60,7 +60,7 @@ var checkoutresp = CheckoutResponse{}           // 响应副本
 var gspecsMap = make(map[string]map[string]int) // map[商品规格名称]map[商品规格]总件数
 var proPrice = []ProPriceRequest{}
 var addresinfolist = []models.AddressInfo{}
-var begtime, endtime time.Time
+var begtime2, endtime2 string
 
 // 添加结账数据
 func AddcheckoutData(sm *SpecManager) {
@@ -164,8 +164,10 @@ func Checkout(ctx context.Context) {
 		return
 	}
 
+	fmt.Println("begtime:", begtime2)
+	fmt.Println("endtime:", endtime2)
 	// 生成带时间戳的文件名
-	filename := fmt.Sprintf("%s_%s结账.xlsx", begtime.Format("2006-01-02"), endtime.Format("2006-01-02"))
+	filename := fmt.Sprintf("%s_%s结账.xlsx", begtime2, endtime2)
 	filePath := fmt.Sprintf("%s/%s", saveDir, filename)
 
 	err = sm.GenerateExcel(filePath)
@@ -277,12 +279,25 @@ func selectSaveDirectory(ctx context.Context) (string, error) {
 
 // 获取指定日期的数据
 func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
+	// 验证日期参数是否有效
+	if statime.IsZero() || endtime.IsZero() {
+		// 返回空响应
+		return CheckoutResponse{
+			FieldList: []string{},
+			Count:     0,
+			ProSPecs:  []ProSPecs{},
+			TableData: []string{},
+			PBMap:     global.ProductBelongMap,
+			TotalRow:  []int{},
+		}
+	}
+
 	// 起始日期
 	begindate := time.Date(statime.Year(), statime.Month(), statime.Day()+1, 0, 0, 0, 0, time.Local)
-	statime = begindate
+	begtime2 = fmt.Sprintf("%d年%d月%d日", begindate.Year(), int(begindate.Month()), begindate.Day())
 	// 截至日期
-	enddate := time.Date(endtime.Year(), endtime.Month(), endtime.Day()+1, 23, 59, 59, 0, time.Local)
-	endtime = enddate
+	enddate := time.Date(endtime.Year(), endtime.Month(), endtime.Day(), 23, 59, 59, 0, time.Local)
+	endtime2 = fmt.Sprintf("%d年%d月%d日", endtime.Year(), int(endtime.Month()), endtime.Day())
 
 	// 查询数据库获取日期数据
 	var _list []models.AddressInfo
@@ -347,7 +362,7 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 		}
 		// 对规格进行降序排序
 		sort.Slice(ProSPecsMap[k], func(i, j int) bool {
-			return parseSpecValue(ProSPecsMap[k][i]) > parseSpecValue(ProSPecsMap[k][j])
+			return parseSpecValue(ProSPecsMap[k][i]) < parseSpecValue(ProSPecsMap[k][j])
 		})
 	}
 

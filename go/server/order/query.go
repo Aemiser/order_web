@@ -30,7 +30,7 @@ func OrderQuery(oq OrderQueryRequest) (resp OrderQueryResponse) {
 	var option = common.Options{
 		PageInfo:     oq.PageInfo,
 		DefaultOrder: "created_at desc",
-		Likes:        []string{"recipient", "address", "phone"},
+		Likes:        []string{"recipient", "address", "phone", "product_specs", "remarks"},
 		Debug:        true,
 		Where:        nil,
 	}

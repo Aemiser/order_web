@@ -209,7 +209,7 @@ func RecognizeAddresses(apiKey, inputText string) ([]models.AddressInfo, error) 
 
 	// 创建HTTP客户端（设置超时）
 	client := &http.Client{
-		Timeout: 120 * time.Second,
+		Timeout: 600 * time.Second, // 设置超时时间为600秒
 	}
 
 	// 创建请求
@@ -242,7 +242,7 @@ func RecognizeAddresses(apiKey, inputText string) ([]models.AddressInfo, error) 
 
 	// 解析响应
 	var apiResp DeepSeekResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	if err = json.Unmarshal(body, &apiResp); err != nil {
 		return nil, fmt.Errorf("响应解析失败: %w", err)
 	}
 
@@ -266,7 +266,7 @@ func RecognizeAddresses(apiKey, inputText string) ([]models.AddressInfo, error) 
 
 	// 解析JSON数组
 	var addressList []models.AddressInfo
-	if err := json.Unmarshal([]byte(content), &addressList); err != nil {
+	if err = json.Unmarshal([]byte(content), &addressList); err != nil {
 		// 尝试解析为单个对象
 		var singleAddr models.AddressInfo
 		if err2 := json.Unmarshal([]byte(content), &singleAddr); err2 == nil {
