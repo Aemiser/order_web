@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { 
   RotateCw, 
   Download, 
@@ -138,9 +138,46 @@ const calculateTotalPages = () => {
   }
 };
 
+// 计算展示的页码列表
+const displayPages = computed(() => {
+  const total = totalPages.value;
+  const current = currentPage.value;
+  const pages: { type: 'page'; value: number } | { type: 'ellipsis'; value: number }[] = [];
+
+  if (total <= 5) {
+    for (let i = 1; i <= total; i++) {
+      pages.push({ type: 'page', value: i });
+    }
+    return pages;
+  }
+
+  pages.push({ type: 'page', value: 1 });
+
+  const start = Math.max(2, current - 3);
+  const end = Math.min(total - 1, current + 3);
+
+  if (start > 2) {
+    pages.push({ type: 'ellipsis', value: -1 });
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push({ type: 'page', value: i });
+  }
+
+  if (end < total - 1) {
+    pages.push({ type: 'ellipsis', value: -1 });
+  }
+
+  pages.push({ type: 'page', value: total });
+
+  return pages;
+});
+
 // 切换页码
 const changePage = debounce((page: number) => {
   if (page < 1 || page > totalPages.value) return;
+  console.log('页码总数:', totalPages.value);
+  console.log('切换页码:', page);
   currentPage.value = page;
   fetchOrderData();
 }, 300);
@@ -560,70 +597,16 @@ const resetQuery = async () => {
           </button>
           
           <!-- 页码按钮 -->
-          <template v-if="totalPages <= 5">
-            <button 
-              v-for="page in totalPages" 
-              :key="page"
-              @click="changePage(page)"
+          <template v-for="(item, idx) in displayPages" :key="idx">
+            <button
+              v-if="item.type === 'page'"
+              @click="changePage(item.value)"
               class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
-              :class="currentPage === page ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
+              :class="currentPage === item.value ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
             >
-              {{ page }}
+              {{ item.value }}
             </button>
-          </template>
-          <template v-else>
-            <!-- 第一页 -->
-            <button 
-              @click="changePage(1)"
-              class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
-              :class="currentPage === 1 ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
-            >
-              1
-            </button>
-            
-            <!-- 省略号 -->
-            <span v-if="currentPage > 4" class="text-slate-600 text-xs mx-1 px-1">...</span>
-            
-            <!-- 当前页附近的页码 -->
-            <button 
-              v-for="page in Math.max(2, currentPage - 2)"
-              :key="page"
-              v-if="page < currentPage && page > 1"
-              @click="changePage(page)"
-              class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white text-xs font-bold transition-colors"
-            >
-              {{ page }}
-            </button>
-            
-            <!-- 当前页 -->
-            <button 
-              class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white text-xs font-bold"
-            >
-              {{ currentPage }}
-            </button>
-            
-            <!-- 当前页附近的页码 -->
-            <button 
-              v-for="page in Math.min(totalPages - 1, currentPage + 2)"
-              :key="page"
-              v-if="page > currentPage && page < totalPages"
-              @click="changePage(page)"
-              class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white text-xs font-bold transition-colors"
-            >
-              {{ page }}
-            </button>
-            
-            <!-- 省略号 -->
-            <span v-if="currentPage < totalPages - 3" class="text-slate-600 text-xs mx-1 px-1">...</span>
-            
-            <!-- 最后一页 -->
-            <button 
-              @click="changePage(totalPages)"
-              class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
-              :class="currentPage === totalPages ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
-            >
-              {{ totalPages }}
-            </button>
+            <span v-else class="text-slate-600 text-xs mx-1 px-1 select-none">...</span>
           </template>
           
           <!-- 下一页按钮 -->
