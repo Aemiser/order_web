@@ -6,7 +6,7 @@ import {ordertutil} from '../models';
 import {order} from '../models';
 import {enum} from '../models';
 
-export function CreateOrder():Promise<string>;
+export function CreateOrder(arg1:time.Time):Promise<string>;
 
 export function DeletepreviewData(arg1:number):Promise<string>;
 
@@ -33,3 +33,5 @@ export function SetPriceData(arg1:Array<checkout.ProPriceRequest>):Promise<check
 export function SetProductBelong(arg1:Record<string, Array<string>>):Promise<void>;
 
 export function SetpreviewData(arg1:ordertutil.ExceladdressInfo):Promise<string>;
+
+export function StartStreamRecognition(arg1:string,arg2:enum.AIModelType,arg3:enum.RecPreviewType):Promise<void>;

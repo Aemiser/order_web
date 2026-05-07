@@ -8,6 +8,7 @@ import (
 	"order_server/go/models/enum"
 	alog "order_server/go/server/log"
 	ordertutil "order_server/go/utils/order"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -71,9 +72,17 @@ func DeletepreviewData(id uint) error {
 }
 
 // 导入数据库
-func CreateOrder() error {
+func CreateOrder(date time.Time) error {
 	if global.AddressList == nil {
 		return errors.New("请先识别订单信息")
+	}
+
+	// 不为今天的订单修改其日期
+	if date.Format("2006-01-02") != time.Now().Format("2006-01-02") {
+		for i := range global.AddressList {
+			global.AddressList[i].CreatedAt = date
+			global.AddressList[i].UpdatedAt = date
+		}
 	}
 
 	var orderlist []models.AddressInfo

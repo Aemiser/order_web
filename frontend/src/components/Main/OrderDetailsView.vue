@@ -18,6 +18,7 @@ import {
 } from 'lucide-vue-next';
 import { OrderQuery } from '../../../wailsjs/go/main/App';
 import { ElDatePicker } from 'element-plus';
+import * as XLSX from "xlsx";
 
 const props = defineProps<{
   activeTab?: string;
@@ -260,6 +261,62 @@ const fetchOrderData = async () => {
   }
 };
 
+const exportToExcel = async () => {
+  isLoading.value = true;
+  try {
+    const addresssinfo = {
+      "收件人": searchParams.value.name || '',
+      "手机号": searchParams.value.phone || '',
+      "收货地址": searchParams.value.address || '',
+      "备注": ''
+    };
+
+    const requestParams: any = {
+      limit: 0,   // limit=0 获取全部数据
+      page: 1,
+      key: searchParams.value.keyword || '',
+      order: '',
+      addresssinfo: addresssinfo
+    };
+    const startDate = new Date(searchParams.value.startTime);
+
+    if (searchParams.value.startTime) {
+
+      startDate.setHours(0, 0, 0, 0);
+      requestParams.Starttime = startDate.toISOString();
+    }
+    const endDate = new Date(searchParams.value.endTime);
+    if (searchParams.value.endTime) {
+      endDate.setHours(23, 59, 59, 999);
+      requestParams.Endtime = endDate.toISOString();
+    }
+
+    const result = await OrderQuery(requestParams);
+
+    if (result && Array.isArray(result.list)) {
+      const exportData = result.list.map((item: any) => ({
+        '收件人': item['收件人'] || '',
+        '手机号': item['手机号'] || '',
+        '收货地址': item['收货地址'] || '',
+        '商品规格': item['商品规格'] || '',
+        '备注': item['备注'] || ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+      // XLSX.writeFile(workbook, `Orders_${new Date().toISOString().split('T')[0]}详情导出.xlsx`);
+      startDate.setDate(startDate.getDate() + 1);
+      XLSX.writeFile(workbook, `Orders_${startDate.toISOString().split('T')[0]}-${endDate.toISOString().split('T')[0]}.xlsx`);
+    }
+  } catch (error) {
+    console.error('导出订单失败:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+
 const getTagClass = (color: string) => {
   switch (color) {
     case 'blue': return 'bg-blue-500/10 text-blue-400';
@@ -407,7 +464,10 @@ const resetQuery = async () => {
       
       <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-white/5">
         <div class="flex gap-3">
-        <button class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-bold border border-white/10 transition-all flex items-center gap-1.5 active:scale-95 text-xs">
+        <button
+            @click="exportToExcel"
+            :disabled="orderDetails.length === 0"
+            class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-bold border border-white/10 transition-all flex items-center gap-1.5 active:scale-95 text-xs">
           批量导出 <Download class="w-3.5 h-3.5" />
         </button>
         </div>

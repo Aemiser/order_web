@@ -23,6 +23,7 @@ func main() {
 	global.Db = core.InitDB()
 	global.ProductBelongMap = core.ReadProductBelongMap()
 	global.AiMap = core.ReadAiMap()
+	global.SystemPrompt = core.Readsystemprompt()
 	flags.Run()
 	// Create application with options
 	err := wails.Run(&options.App{

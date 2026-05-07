@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Info, Download, RotateCw, SlidersHorizontal, Wallet, DollarSign } from 'lucide-vue-next';
+import { ElDatePicker } from 'element-plus';
 import * as XLSX from 'xlsx';
 
 import Sidebar from './components/Sidebar/Sidebar.vue';
@@ -34,6 +35,10 @@ const selectedDateRange = ref<{start: string, end: string}>({
   start: '2026-03-01',
   end: '2026-03-31'
 });
+
+// 时间选择器相关状态
+const selectedDateTime = ref<Date>(new Date());
+const dateError = ref('');
 
 // 字段数据
 const fieldData = ref<{
@@ -197,16 +202,27 @@ const selectedDays = computed(() => {
 });
 
 const createOrder = () => {
+  // 重置时间选择器为当前时间
+  selectedDateTime.value = new Date();
+  // 清除日期错误
+  dateError.value = '';
   // 显示确认模态弹窗
   showConfirmModal.value = true;
 };
 
 const handleConfirm = async () => {
+  // 验证日期时间
+  if (!selectedDateTime.value) {
+    dateError.value = '请选择订单日期';
+    return;
+  }
+  
   // 关闭模态弹窗
   showConfirmModal.value = false;
   
   try {
-    const result = await CreateOrder();
+    console.log('调用CreateOrder:', { date: selectedDateTime.value });
+    const result = await CreateOrder(selectedDateTime.value);
     statusMessage.value = result;
     setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
   } catch (error) {
@@ -219,6 +235,8 @@ const handleConfirm = async () => {
 const handleCancel = () => {
   // 关闭模态弹窗
   showConfirmModal.value = false;
+  // 清除日期错误
+  dateError.value = '';
 };
 
 // 处理字段配置
@@ -590,6 +608,23 @@ const handleFieldDataLoading = (isLoading: boolean) => {
         <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
           <h3 class="text-xl font-bold text-white mb-4 font-display">确认操作</h3>
           <p class="text-slate-300 mb-6">请确保今日的订单绝对正确，不然会影响结账！！！</p>
+          
+          <!-- 时间选择器 -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-slate-400 mb-2">选择订单日期</label>
+            <ElDatePicker
+              v-model="selectedDateTime"
+              type="datetime"
+              placeholder="选择日期和时间"
+              class="w-full"
+              :popper-class="'date-picker-popper'"
+              :clearable="false"
+              size="large"
+              :disabled-date="(time) => time.getTime() > new Date().getTime()"
+            />
+            <p v-if="dateError" class="text-xs text-red-400 mt-2">{{ dateError }}</p>
+          </div>
+          
           <div class="flex justify-end gap-4">
             <button @click="handleCancel" class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all">
               取消
@@ -628,5 +663,117 @@ const handleFieldDataLoading = (isLoading: boolean) => {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #334155;
   border-radius: 10px;
+}
+
+/* Element Plus 日期选择器样式 */
+:deep(.el-date-editor) {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:deep(.el-date-editor .el-input__wrapper) {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:deep(.el-input__wrapper) {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box !important;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #3B82F6;
+  background-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 1px #3B82F6 inset;
+}
+
+:deep(.el-input__inner) {
+  color: #e2e8f0;
+  font-size: 0.875rem;
+}
+
+:deep(.el-input__placeholder) {
+  color: #94A3B8;
+}
+
+:deep(.el-range-separator) {
+  color: #94A3B8;
+}
+
+/* 日期选择器弹出层样式 */
+.date-picker-popper {
+  background-color: #1E2228 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+}
+
+:deep(.el-date-picker__header) {
+  background-color: #1E2228 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+:deep(.el-date-picker__header-label) {
+  color: #e2e8f0 !important;
+}
+
+:deep(.el-date-picker__prev-btn:hover, .el-date-picker__next-btn:hover) {
+  color: #3B82F6 !important;
+}
+
+:deep(.el-date-table th) {
+  color: #94A3B8 !important;
+}
+
+:deep(.el-date-table td) {
+  color: #e2e8f0 !important;
+}
+
+:deep(.el-date-table td:hover) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+:deep(.el-date-table td.is-selected) {
+  background-color: #3B82F6 !important;
+}
+
+:deep(.el-date-table td.is-today) {
+  color: #3B82F6 !important;
+}
+
+:deep(.el-date-table td.is-disabled) {
+  color: #475569 !important;
+}
+
+:deep(.el-picker-panel__footer) {
+  background-color: #1E2228 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+:deep(.el-button--primary) {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+}
+
+:deep(.el-button--default) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
+}
+
+:deep(.el-button--default:hover) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 </style>

@@ -46,6 +46,15 @@ func (a *App) OrderRecognition(context string, aimodel enum.AIModelType, model e
 	return order.OrderRec(context, aimodel, model)
 }
 
+func (a *App) StartStreamRecognition(inputText string, aimodel enum.AIModelType, previewType enum.RecPreviewType) {
+	order.StreamOrderRec(a.ctx, inputText, aimodel, previewType, func(data string) error {
+		runtime.EventsEmit(a.ctx, "stream-order-data", data)
+		return nil
+	}, func() {
+		runtime.EventsEmit(a.ctx, "stream-order-data", "DONE")
+	})
+}
+
 //// 获取配置消息
 //func (a *App) GetConfig() config.ReConf {
 //	return config.GetConf()
@@ -85,8 +94,8 @@ func (a *App) DeletepreviewData(id uint) string {
 }
 
 // 订单导入数据库
-func (a *App) CreateOrder() string {
-	err := order.CreateOrder()
+func (a *App) CreateOrder(date time.Time) string {
+	err := order.CreateOrder(date)
 	if err == nil {
 		return "订单导入成功"
 	}

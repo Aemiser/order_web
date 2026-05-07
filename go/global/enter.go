@@ -17,4 +17,5 @@ var (
 	AddressList      []models.AddressInfo
 	ProductBelongMap = map[string][]string{}
 	AiMap            = map[string]int{}
+	SystemPrompt     string
 )

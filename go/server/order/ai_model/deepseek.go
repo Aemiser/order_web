@@ -28,6 +28,10 @@ type DeepSeekResponse struct {
 		Message struct {
 			Content string `json:"content"`
 		} `json:"message"`
+		Delta struct {
+			Content string `json:"content"`
+		} `json:"delta"`
+		FinishReason string `json:"finish_reason"`
 	} `json:"choices"`
 	Error *struct {
 		Message string `json:"message"`
@@ -81,7 +85,7 @@ func RecognizeAddresses(apiKey, inputText string) ([]models.AddressInfo, error) 
 	reqBody := DeepSeekRequest{
 		Model: modelName,
 		Messages: []Message{
-			{Role: "system", Content: systemPrompt},
+			{Role: "system", Content: global.SystemPrompt},
 			{Role: "user", Content: inputText},
 		},
 		Temperature: 0.5, // 低温使输出更确定
@@ -117,4 +121,84 @@ func RecognizeAddresses(apiKey, inputText string) ([]models.AddressInfo, error) 
 	content := apiResp.Choices[0].Message.Content
 
 	return ordertutil.RespBodyToJson(content)
+}
+
+type DeepSeekStreamCallback func(data string) error
+type DeepSeekDoneCallback func()
+
+func StreamRecDeepseek(inputText string, previewType enum.RecPreviewType, callback func(string) error, doneCallback func()) {
+	fmt.Println("==============流式调用DeepSeek==============")
+	apiKey := global.Config.AiModel.Deepseek.Apikey
+
+	callChatStreamDeepseek(apiKey, inputText, func(content string) error {
+		addressList, err := ordertutil.RespBodyToJson(content)
+		if err != nil {
+			return nil
+		}
+
+		if len(addressList) > 0 {
+			addressList = ordertutil.SetVid(addressList)
+
+			if previewType == enum.RecPreviewType_ADD {
+				global.AddressList = append(global.AddressList, addressList...)
+			} else if previewType == enum.RecPreviewType_RE {
+				global.AddressList = addressList
+			}
+
+			excelData := ordertutil.AddressToExcelAddress(addressList)
+			jsonData, _ := json.Marshal(excelData)
+			callback(string(jsonData))
+		}
+
+		return nil
+	}, func() {
+		excelData := ordertutil.AddressToExcelAddress(global.AddressList)
+		jsonData, _ := json.Marshal(excelData)
+		callback(string(jsonData))
+		doneCallback()
+	})
+}
+
+func callChatStreamDeepseek(apiKey, inputText string, chunkCallback func(string) error, doneCallback func()) {
+	reqBody := DeepSeekRequest{
+		Model: modelName,
+		Messages: []Message{
+			{Role: "system", Content: global.SystemPrompt},
+			{Role: "user", Content: inputText},
+		},
+		Temperature: 0.5,
+		MaxTokens:   8192,
+		Stream:      true,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		logrus.Errorf("请求序列化失败: %v", err)
+		return
+	}
+
+	err = httputils.AiStreamRequest(apiKey, apiURL, jsonData, global.Config.AiModel.Deepseek.Timeout, nil, func(data string) error {
+		if data == "DONE" {
+			doneCallback()
+			return nil
+		}
+
+		var streamResp DeepSeekResponse
+		if err := json.Unmarshal([]byte(data), &streamResp); err != nil {
+			return nil
+		}
+
+		if len(streamResp.Choices) > 0 {
+			delta := streamResp.Choices[0].Delta.Content
+			if delta != "" {
+				return chunkCallback(delta)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		logrus.Errorf("流式请求失败: %v", err)
+	}
 }
