@@ -49,7 +49,7 @@ const totalPages = ref(1); // 总页数
 const isLoading = ref(false); // 加载状态
 
 // 每页显示条数选项
-const pageSizeOptions = [5, 10, 20, 25];
+const pageSizeOptions = [5, 10, 20,50,100];
 
 // 查询参数
 const searchParams = ref({
@@ -59,7 +59,7 @@ const searchParams = ref({
   item: '',
   keyword: '',
   startTime: '',
-  endTime: ''
+  endTime: '',
 });
 
 // 日期范围
@@ -332,6 +332,7 @@ const exportToExcel = async () => {
 
     if (result && Array.isArray(result.list)) {
       const exportData = result.list.map((item: any) => ({
+        '日期': item.createdAt ? new Date(item.createdAt).toLocaleString() : '未知时间',
         '收件人': item['收件人'] || '',
         '手机号': item['手机号'] || '',
         '收货地址': item['收货地址'] || '',
@@ -535,7 +536,7 @@ const resetQuery = async () => {
             </tr>
           </thead>
           <tbody class="divide-y divide-white/5">
-            <tr v-for="(order, index) in orderDetails" :key="index" class="table-row-hover transition-colors" :class="{ 'bg-white/[0.01]': index % 2 === 1 }">
+            <tr v-for="(order, index) in orderDetails" :key="index" class="table-row-hover transition-colors" :class="{ 'bg-blue-600/[0.04]': index % 2 === 1 }">
               <td class="px-6 py-5 text-slate-500 text-xs font-mono">{{ order.time }}</td>
               <td class="px-6 py-5 font-medium">{{ order.name }}</td>
               <td class="px-6 py-5 font-mono text-slate-400">{{ order.phone }}</td>

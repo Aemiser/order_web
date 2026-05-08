@@ -15,14 +15,14 @@ type PageInfo struct {
 }
 
 func (p PageInfo) GetLimit() int {
-	if p.Limit > 20 || p.Limit < 0 {
+	if p.Limit < 0 {
 		p.Limit = 1
 	}
 	return p.Limit
 }
 
 func (p PageInfo) GetPage() int {
-	if p.Page > 20 || p.Page < 0 {
+	if p.Page < 0 {
 		p.Page = 1
 	}
 	return p.Page

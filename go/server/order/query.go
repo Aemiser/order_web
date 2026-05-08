@@ -27,9 +27,11 @@ func OrderQuery(oq OrderQueryRequest) (resp OrderQueryResponse) {
 
 	var addresslist = oq.Addresssinfo
 	fmt.Println("参数列表：", addresslist)
+	fmt.Println("参数列表page：", oq.Page)
+	fmt.Println("参数列表limit：", oq.Limit)
 	var option = common.Options{
 		PageInfo:     oq.PageInfo,
-		DefaultOrder: "created_at desc",
+		DefaultOrder: "created_at",
 		Likes:        []string{"recipient", "address", "phone", "product_specs", "remarks"},
 		Debug:        true,
 		Where:        nil,
@@ -47,11 +49,14 @@ func OrderQuery(oq OrderQueryRequest) (resp OrderQueryResponse) {
 		logrus.Errorf("查询失败 %s", err)
 		return
 	}
-	fmt.Println(_list)
+
 	list := ordertutil.AddressToExcelAddress(_list)
 	resp = OrderQueryResponse{
 		List:  list,
 		Count: count,
+	}
+	for _, info := range list {
+		fmt.Println(info)
 	}
 	return
 }
