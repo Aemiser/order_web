@@ -61,9 +61,9 @@ const analyzeOrders = async (isAppend: boolean = false, modelId: number = 0) => 
   statusMessage.value = '正在识别订单数据...';
   
   try {
-    // 调用后端的OrderRecognition方法，参数：上下文，AI模型ID，预览类型
+    // 调用后端识别接口，参数：上下文，AI 模型 ID，预览类型
     const previewType = isAppend ? 1 : 0;
-    console.log('调用OrderRecognition:', {
+    console.log('识别请求:', {
       context: inputText.value,
       modelId: modelId,
       previewType: previewType
@@ -220,7 +220,7 @@ const handleConfirm = async () => {
   showConfirmModal.value = false;
   
   try {
-    console.log('调用CreateOrder:', { date: selectedDateTime.value });
+    console.log('创建订单:', { date: selectedDateTime.value });
     await orderApi.createOrder(selectedDateTime.value);
     statusMessage.value = '订单导入成功';
     setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
