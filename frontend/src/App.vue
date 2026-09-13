@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Info, Download, RotateCw, SlidersHorizontal, Wallet, DollarSign, RefreshCw, X, Check, AlertTriangle } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { Info, Download, RotateCw, SlidersHorizontal, Wallet, DollarSign } from 'lucide-vue-next';
 import { ElDatePicker } from 'element-plus';
 import * as XLSX from 'xlsx';
 
 import Sidebar from './components/Sidebar/Sidebar.vue';
-import demo from './components/demo.vue';
 import Header from './components/Header/Header.vue';
 import FieldDialog from './components/Main/Dialog/Field.vue';
 
@@ -13,9 +12,8 @@ import OrderInputView from './components/Main/OrderInputView.vue';
 import OrderDetailsView from './components/Main/OrderDetailsView.vue';
 import AppSettingsView from './components/Main/AppSettingsView.vue';
 import CheckoutView from './components/Main/Checkout/CheckoutView.vue';
-import { OrderRecognition, GetpreviewData, DeletepreviewData, CreateOrder, SavePriceData, GetDaydata, DownloadUpdate, RestartApplication } from '../wailsjs/go/main/App';
-import { EventsOn, EventsOff } from '../wailsjs/runtime/runtime';
-import { updateState } from './stores/update';
+import * as orderApi from './api/order';
+import * as checkoutApi from './api/checkout';
 import type { Order } from './types';
 
 
@@ -55,52 +53,6 @@ const fieldData = ref<{
 const isLoadingFieldData = ref(false);
 const fieldDataLoaded = ref(false);
 
-// 版本更新状态
-const showDownloadDialog = ref(false);
-const downloadProgress = ref(0);
-const downloadTotal = ref(0);
-const downloadPercentage = ref(0);
-const downloadSpeed = ref(0);
-const downloadComplete = ref(false);
-const downloadFilePath = ref('');
-const downloadErrors = ref<string[]>([]);
-const downloadError = ref('');
-
-const logDownloadError = (msg: string) => {
-  const time = new Date().toLocaleTimeString();
-  downloadErrors.value.push(`[${time}] ${msg}`);
-};
-
-// 设置事件监听（download 等运行时事件）
-let unsubscribers: (() => void)[] = [];
-
-onMounted(() => {
-  const unsub1 = EventsOn('download_progress', (current: number, total: number, percentage: number, speed: number) => {
-    downloadProgress.value = current;
-    downloadTotal.value = total;
-    downloadPercentage.value = percentage;
-    downloadSpeed.value = speed;
-  });
-
-  const unsub2 = EventsOn('download_complete', (filepath: string) => {
-    downloadComplete.value = true;
-    downloadFilePath.value = filepath;
-    downloadPercentage.value = 100;
-  });
-
-  const unsub3 = EventsOn('download_error', (err: string) => {
-    downloadError.value = err;
-    logDownloadError(err);
-  });
-
-  unsubscribers = [unsub1, unsub2, unsub3];
-});
-
-onUnmounted(() => {
-  unsubscribers.forEach(fn => fn());
-  EventsOff('download_progress', 'download_complete', 'download_error');
-});
-
 // --- Logic ---
 const analyzeOrders = async (isAppend: boolean = false, modelId: number = 0) => {
   if (!inputText.value.trim()) return;
@@ -116,7 +68,7 @@ const analyzeOrders = async (isAppend: boolean = false, modelId: number = 0) => 
       modelId: modelId,
       previewType: previewType
     });
-    const result = await OrderRecognition(inputText.value, modelId, previewType);
+    const result = await orderApi.recognition(inputText.value, modelId, previewType);
     console.log('识别结果:', result);
     // 转换后端返回的数据为Order类型
     const newOrders: Order[] = [];
@@ -163,13 +115,12 @@ const removeOrder = (id: string) => {
 
 const deleteOrder = async (id: string) => {
   try {
-    // 调用后端的 DeletepreviewData 方法
-    const result = await DeletepreviewData(parseInt(id));
-    statusMessage.value = result;
-    
+    await orderApi.deletePreview(parseInt(id));
+    statusMessage.value = '删除成功';
+
     // 刷新数据
     await refreshData();
-    
+
     // 3秒后恢复默认状态
     setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
   } catch (error) {
@@ -208,7 +159,7 @@ const exportToExcel = () => {
 
 const refreshData = async () => {
   try {
-    const result = await GetpreviewData();
+    const result = await orderApi.getPreview();
     if (Array.isArray(result)) {
       const newOrders: Order[] = result.map((item: any) => ({
         id: item.VID,
@@ -270,8 +221,8 @@ const handleConfirm = async () => {
   
   try {
     console.log('调用CreateOrder:', { date: selectedDateTime.value });
-    const result = await CreateOrder(selectedDateTime.value);
-    statusMessage.value = result;
+    await orderApi.createOrder(selectedDateTime.value);
+    statusMessage.value = '订单导入成功';
     setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
   } catch (error) {
     console.error('创建订单失败:', error);
@@ -299,12 +250,11 @@ const handleConfig = () => {
 };
 
 // 处理保存字段配置
-const handleSaveFieldConfig = (fieldMap: Record<string, string[]>) => {
+const handleSaveFieldConfig = async (fieldMap: Record<string, string[]>) => {
   console.log('保存字段配置:', fieldMap);
-  
+
   try {
-    // 调用后端 SetProductBelong 函数
-    window['go']['main']['App']['SetProductBelong'](fieldMap);
+    await checkoutApi.setProductBelong(fieldMap);
     console.log('字段配置保存成功');
     statusMessage.value = '字段配置保存成功';
     setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
@@ -312,7 +262,7 @@ const handleSaveFieldConfig = (fieldMap: Record<string, string[]>) => {
     console.error('保存字段配置失败:', error);
     alert('保存字段配置失败，请稍后重试');
   }
-  
+
   showFieldDialog.value = false;
 };
 
@@ -400,7 +350,7 @@ const handleSavePrices = async (data?: any[]) => {
     statusMessage.value = '正在保存价格数据...';
     
     // 调用后端的 SetPriceData 方法
-    const response = await window['go']['main']['App']['SetPriceData'](proPriceRequests.value);
+    const response = await checkoutApi.setPrice(proPriceRequests.value);
     console.log('保存价格成功:', response);
     // 存储后端响应数据
     checkoutResponse.value = response;
@@ -447,8 +397,11 @@ const handleCheckout = async () => {
     statusMessage.value = '正在生成财务账单...';
     
     // 调用后端的 SaveCheackToExcel 方法
-    const response = await window['go']['main']['App']['SaveCheackToExcel']();
+    const response = await checkoutApi.exportCheckout();
     console.log('结算账单成功:', response);
+    if (response?.url) {
+      window.open(response.url, '_blank');
+    }
     statusMessage.value = '财务账单生成成功';
     setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
   } catch (error) {
@@ -485,35 +438,6 @@ const handleFieldDataLoading = (isLoading: boolean) => {
   isLoadingFieldData.value = isLoading;
   console.log('字段数据加载状态:', isLoading);
 };
-
-// 处理版本更新
-const handleUpdateDismiss = () => {
-  updateState.showDialog = false;
-};
-
-const handleStartUpdate = () => {
-  updateState.showDialog = false;
-  showDownloadDialog.value = true;
-  downloadProgress.value = 0;
-  downloadTotal.value = 0;
-  downloadPercentage.value = 0;
-  downloadSpeed.value = 0;
-  downloadComplete.value = false;
-  downloadFilePath.value = '';
-  downloadErrors.value = [];
-  downloadError.value = '';
-  DownloadUpdate();
-};
-
-const handleRestart = () => {
-  RestartApplication();
-};
-
-const handleCloseDownload = () => {
-  showDownloadDialog.value = false;
-};
-
-
 
 </script>
 
@@ -720,108 +644,6 @@ const handleCloseDownload = () => {
         @close="showFieldDialog = false" 
         @save="handleSaveFieldConfig"
       />
-      
-      <!-- Version Update Notification Dialog -->
-      <div v-if="updateState.showDialog" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300">
-        <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center">
-              <AlertTriangle class="w-5 h-5 text-blue-400" />
-            </div>
-            <h3 class="text-xl font-bold text-white font-display">发现新版本</h3>
-          </div>
-          <p class="text-slate-300 mb-2">当前版本已过时，建议更新到最新版本以获取更好的体验和最新的功能。</p>
-          <div class="bg-white/[0.03] border border-white/5 rounded-xl p-4 mb-6">
-            <div class="text-sm text-slate-400 mb-1">最新版本</div>
-            <div class="text-lg font-bold text-white">{{ updateState.name }}</div>
-            <div class="text-xs text-slate-500 mt-1">Tag: {{ updateState.version }}</div>
-          </div>
-          <div class="flex justify-end gap-4">
-            <button @click="handleUpdateDismiss" class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all">
-              取消
-            </button>
-            <button @click="handleStartUpdate" class="px-8 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all flex items-center gap-2 shadow-lg shadow-blue-600/20">
-              <Download class="w-4 h-4" />
-              更新
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Download Progress Dialog -->
-      <div v-if="showDownloadDialog" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300">
-        <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-lg w-full mx-4 transform transition-all duration-300 scale-100">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center">
-              <Download class="w-5 h-5 text-blue-400" :class="{ 'animate-bounce': !downloadComplete }" />
-            </div>
-            <div>
-              <h3 class="text-xl font-bold text-white font-display">{{ downloadComplete ? '下载完成' : '正在下载更新' }}</h3>
-              <p class="text-sm text-slate-500 mt-0.5">{{ updateState.name }}</p>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div class="mb-4">
-            <div class="flex justify-between text-sm mb-2">
-              <span class="text-slate-400">{{ downloadComplete ? '下载完毕' : '下载进度' }}</span>
-              <span class="text-white font-bold">{{ downloadPercentage.toFixed(1) }}%</span>
-            </div>
-            <div class="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-              <div 
-                class="h-full rounded-full transition-all duration-300"
-                :class="downloadComplete ? 'bg-emerald-500' : 'bg-blue-600'"
-                :style="{ width: downloadPercentage + '%' }"
-              ></div>
-            </div>
-            <div class="flex justify-between text-xs text-slate-500 mt-1">
-              <span>{{ (downloadProgress / 1024 / 1024).toFixed(1) }} MB / {{ (downloadTotal / 1024 / 1024).toFixed(1) }} MB</span>
-              <span>{{ downloadSpeed.toFixed(2) }} MB/s</span>
-            </div>
-          </div>
-
-          <!-- Error Log -->
-          <div v-if="downloadErrors.length > 0" class="mb-4">
-            <div class="text-xs text-slate-500 mb-1">日志</div>
-            <div class="bg-[#0F1115] border border-white/5 rounded-xl p-3 max-h-32 overflow-y-auto custom-scrollbar">
-              <div v-for="(err, idx) in downloadErrors" :key="idx" class="text-xs text-red-400 font-mono leading-relaxed">{{ err }}</div>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex justify-end gap-4">
-            <button 
-              v-if="!downloadComplete && !downloadError"
-              disabled
-              class="px-6 py-2 rounded-lg bg-white/5 text-slate-500 font-medium transition-all cursor-not-allowed"
-            >
-              请等待下载完成...
-            </button>
-            <button 
-              v-if="downloadError && !downloadComplete"
-              @click="handleCloseDownload"
-              class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all"
-            >
-              关闭
-            </button>
-            <button 
-              v-if="downloadComplete"
-              @click="handleCloseDownload"
-              class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all"
-            >
-              稍后重启
-            </button>
-            <button 
-              v-if="downloadComplete"
-              @click="handleRestart"
-              class="px-8 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20"
-            >
-              <RefreshCw class="w-4 h-4" />
-              重启应用
-            </button>
-          </div>
-        </div>
-      </div>
       
 
     </main>
