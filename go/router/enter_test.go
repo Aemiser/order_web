@@ -9,6 +9,7 @@ import (
 	"order_server/go/global"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -106,5 +107,25 @@ func TestStaticServesEscapedChineseFilename(t *testing.T) {
 	}
 	if !bytes.Equal(w.Body.Bytes(), content) {
 		t.Fatalf("body = %q, want %q", w.Body.Bytes(), content)
+	}
+}
+
+// 目录请求不得枚举文件名（gin.Static 内部使用 Dir(root, false) 屏蔽了 Readdir）
+func TestStaticDoesNotListDirectory(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	setupGlobal(t)
+
+	name := "secret-order.xlsx"
+	if err := os.WriteFile(filepath.Join(global.Config.SavePath.Excel, name), []byte("x"), 0644); err != nil {
+		t.Fatalf("写入测试文件失败: %v", err)
+	}
+
+	r := Setup()
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/uploads/", nil)
+	r.ServeHTTP(w, req)
+
+	if strings.Contains(w.Body.String(), name) {
+		t.Fatalf("目录响应不应列出文件名，body = %q", w.Body.String())
 	}
 }

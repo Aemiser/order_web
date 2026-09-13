@@ -10,6 +10,7 @@ import (
 func Setup() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(AccessLog())
 	r.Use(CORS())
 
 	api := r.Group("/api")

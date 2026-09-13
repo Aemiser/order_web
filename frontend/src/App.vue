@@ -14,6 +14,7 @@ import AppSettingsView from './components/Main/AppSettingsView.vue';
 import CheckoutView from './components/Main/Checkout/CheckoutView.vue';
 import * as orderApi from './api/order';
 import * as checkoutApi from './api/checkout';
+import { BASE } from './api/request';
 import type { Order } from './types';
 
 
@@ -400,7 +401,7 @@ const handleCheckout = async () => {
     const response = await checkoutApi.exportCheckout();
     console.log('结算账单成功:', response);
     if (response?.url) {
-      window.open(response.url, '_blank');
+      window.open(`${BASE}${response.url}`, '_blank');
     }
     statusMessage.value = '财务账单生成成功';
     setTimeout(() => statusMessage.value = '系统已就绪 (后端模式)', 3000);
