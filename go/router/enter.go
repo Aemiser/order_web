@@ -37,8 +37,10 @@ func Setup() *gin.Engine {
 		}
 	}
 
-	// 导出文件静态下载
-	r.Static("/uploads", global.Config.SavePath.Excel)
+	// 导出文件静态下载；目录未配置时不挂载，避免 http.Dir("") 退化为服务当前工作目录
+	if dir := global.Config.SavePath.Excel; dir != "" {
+		r.Static("/uploads", dir)
+	}
 
 	return r
 }

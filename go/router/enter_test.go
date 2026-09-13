@@ -1,10 +1,14 @@
 package router
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"order_server/go/conf"
 	"order_server/go/global"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -78,5 +82,29 @@ func TestCORSRejectsUnlistedOrigin(t *testing.T) {
 
 	if got := w.Header().Get("Access-Control-Allow-Origin"); got != "" {
 		t.Fatalf("未授权来源不应返回 CORS 头，得到 %q", got)
+	}
+}
+
+// 校验 /uploads 静态路由确实挂在导出目录上，且能通过百分号编码的中文文件名下载
+func TestStaticServesEscapedChineseFilename(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	setupGlobal(t)
+
+	name := "2026-09-01_2026-09-13结账.xlsx"
+	content := []byte("xlsx-bytes")
+	if err := os.WriteFile(filepath.Join(global.Config.SavePath.Excel, name), content, 0644); err != nil {
+		t.Fatalf("写入测试文件失败: %v", err)
+	}
+
+	r := Setup()
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/uploads/"+url.PathEscape(name), nil)
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+	if !bytes.Equal(w.Body.Bytes(), content) {
+		t.Fatalf("body = %q, want %q", w.Body.Bytes(), content)
 	}
 }

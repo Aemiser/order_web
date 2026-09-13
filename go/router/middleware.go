@@ -12,9 +12,9 @@ func CORS() gin.HandlerFunc {
 	allowOrigins := global.Config.Server.AllowOrigins
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
+		c.Header("Vary", "Origin")
 		if origin != "" && contains(allowOrigins, origin) {
 			c.Header("Access-Control-Allow-Origin", origin)
-			c.Header("Vary", "Origin")
 			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 			c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		}
