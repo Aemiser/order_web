@@ -49,7 +49,7 @@ func (a *App) OrderRecognition(context string, aimodel enum.AIModelType, model e
 }
 
 func (a *App) StartStreamRecognition(inputText string, aimodel enum.AIModelType, previewType enum.RecPreviewType) {
-	order.StreamOrderRec(a.ctx, inputText, aimodel, previewType, func(data string) error {
+	order.StreamOrderRec(inputText, aimodel, previewType, func(data string) error {
 		runtime.EventsEmit(a.ctx, "stream-order-data", data)
 		return nil
 	}, func() {

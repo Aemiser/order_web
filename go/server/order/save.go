@@ -7,25 +7,27 @@ import (
 	"order_server/go/models/enum"
 	alog "order_server/go/server/log"
 	"order_server/go/utils/save"
+	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
-func SaveToExcel() {
+func SaveToExcel() (string, error) {
 	addressList := global.AddressList
 	now := time.Now()
 	filename := fmt.Sprintf("%s.xlsx", now.Format("2006-01-02"))
 	// 保存为Excel文件
-	excelFile, err := save.SaveToExcel(addressList, filename)
+	excelFile, err := save.SaveToExcel(addressList, filepath.Join(global.Config.SavePath.Excel, filename))
 	if err != nil {
 		logrus.Errorf("保存Excel文件失败: %v", err)
 		alog.Logaction(enum.LogErrLevel, "保存Excel文件失败", err.Error())
+		return "", err
 	}
 	logrus.Infof("Excel文件已保存: %s\n", excelFile)
-	logtent := "保存路径：\n" + global.Config.SavePath.Excel + "\\" + filename
+	logtent := "保存路径：\n" + excelFile
 	alog.Logaction(enum.LogInfoLevel, "保存Excel文件成功", logtent)
-
+	return excelFile, nil
 }
 
 func SaveToJSON(addressList []models.AddressInfo) {
