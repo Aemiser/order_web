@@ -22,6 +22,13 @@ export async function streamRecognition(
     throw new Error(`HTTP ${res.status}`);
   }
 
+  // 参数错误时后端在进入 SSE 前先写 JSON 错误响应（同样 HTTP 200），故按 content-type 区分
+  const contentType = res.headers.get('content-type') ?? '';
+  if (!contentType.includes('text/event-stream')) {
+    const payload = await res.json().catch(() => null);
+    throw new Error(payload?.msg || `HTTP ${res.status}`);
+  }
+
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -47,5 +54,7 @@ export async function streamRecognition(
       if (data) handlers.onData(data);
     }
   }
-  handlers.onDone?.();
+
+  // 后端正常结束时必发 DONE；走到这里说明连接被截断
+  throw new Error('SSE 流未正常结束（未收到 DONE）');
 }

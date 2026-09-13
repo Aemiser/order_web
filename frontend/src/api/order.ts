@@ -18,7 +18,8 @@ export interface ExcelAddressInfo {
 }
 
 export interface OrderQueryResponse {
-  list: ExcelAddressInfo[];
+  // 后端空结果集为 nil slice，JSON 序列化为 null
+  list: ExcelAddressInfo[] | null;
   count: number;
 }
 
@@ -46,7 +47,7 @@ export function recognition(text: string, aimodel: number, previewType: number) 
 }
 
 export function getPreview() {
-  return get<ExcelAddressInfo[]>('/api/order/preview');
+  return get<ExcelAddressInfo[] | null>('/api/order/preview');
 }
 
 export function setPreview(address: ExcelAddressInfo) {
