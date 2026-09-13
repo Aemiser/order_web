@@ -6,16 +6,3 @@ export interface Order {
   items: string;
   note: string;
 }
-
-// 声明window.go对象的类型
-declare global {
-  interface Window {
-    go?: {
-      main?: {
-        App?: {
-          OrderRecognition?: (context: string) => Promise<any>;
-        };
-      };
-    };
-  }
-}
