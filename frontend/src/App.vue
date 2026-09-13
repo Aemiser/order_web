@@ -349,7 +349,7 @@ const handleSavePrices = async (data?: any[]) => {
     isLoading.value = true;
     statusMessage.value = '正在保存价格数据...';
     
-    // 调用后端的 SetPriceData 方法
+    // 调用后端保存价格接口
     const response = await checkoutApi.setPrice(proPriceRequests.value);
     console.log('保存价格成功:', response);
     // 存储后端响应数据
@@ -396,7 +396,7 @@ const handleCheckout = async () => {
     isLoading.value = true;
     statusMessage.value = '正在生成财务账单...';
     
-    // 调用后端的 SaveCheackToExcel 方法
+    // 调用后端导出账单接口
     const response = await checkoutApi.exportCheckout();
     console.log('结算账单成功:', response);
     if (response?.url) {
