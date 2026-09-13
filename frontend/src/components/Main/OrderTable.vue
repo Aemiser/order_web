@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue';
 import { Edit3, Trash2, Check, X } from 'lucide-vue-next';
-import { SetpreviewData } from '../../../wailsjs/go/main/App';
+import * as orderApi from '../../api/order';
 import type { Order } from '../../types';
 
 const props = defineProps<{
@@ -47,7 +47,7 @@ const saveEdit = async () => {
         "备注": editedOrder.note || ''
       };
       
-      await SetpreviewData(excelAddressInfo);
+      await orderApi.setPreview(excelAddressInfo);
       emit('edit', editedOrder as Order);
       emit('refreshData');
       currentEditingId.value = null;

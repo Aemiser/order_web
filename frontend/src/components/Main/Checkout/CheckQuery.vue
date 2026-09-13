@@ -46,6 +46,7 @@
 import { ref, onMounted } from 'vue';
 import { Search, Filter, Database, Calendar } from 'lucide-vue-next';
 import { ElDatePicker } from 'element-plus';
+import * as checkoutApi from '../../../api/checkout';
 
 // 定义组件属性
 const props = defineProps<{
@@ -150,11 +151,8 @@ const handleQuery = async () => {
       endDateUTC: endDate.toUTCString()
     });
     
-    // 调用后端 GetChackDaydata 函数
-    const response = await window['go']['main']['App']['GetChackDaydata'](
-      startDate,
-      endDate
-    );
+    // 调用后端日数据接口
+    const response = await checkoutApi.getDayData(startDate, endDate);
     
     console.log('后端响应:', response);
     

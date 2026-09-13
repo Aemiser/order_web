@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { Sparkles, Loader2, ChevronDown, ChevronUp } from 'lucide-vue-next';
+import * as systemApi from '../../api/system';
 
 defineProps<{
   inputText: string;
@@ -28,7 +29,7 @@ const fetchAIModels = async () => {
   isLoadingModels.value = true;
   modelError.value = '';
   try {
-    const models = await window['go']['main']['App']['GetAIModel']();
+    const models = await systemApi.getAIModels();
     aiModels.value = new Map(Object.entries(models));
     // 默认选择第一个模型
     if (aiModels.value.size > 0) {

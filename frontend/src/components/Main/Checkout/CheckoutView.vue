@@ -42,6 +42,7 @@ import { RotateCw, SlidersHorizontal, Wallet } from 'lucide-vue-next';
 import CheckQuery from './CheckQuery.vue';
 import CheckTable from './CheckTable.vue';
 import FieldDialog from '../Dialog/Field.vue';
+import * as checkoutApi from '../../../api/checkout';
 
 // 初始日期范围
 const initialDateStart = ref('2024-02-01');
@@ -180,18 +181,17 @@ const handleCloseFieldDialog = () => {
 };
 
 // 处理保存字段配置
-const handleSaveFieldConfig = (fieldMap: Record<string, string[]>) => {
+const handleSaveFieldConfig = async (fieldMap: Record<string, string[]>) => {
   console.log('保存字段配置:', fieldMap);
-  
+
   try {
-    // 调用后端 SetProductBelong 函数
-    window['go']['main']['App']['SetProductBelong'](fieldMap);
+    await checkoutApi.setProductBelong(fieldMap);
     console.log('字段配置保存成功');
   } catch (error) {
     console.error('保存字段配置失败:', error);
     alert('保存字段配置失败，请稍后重试');
   }
-  
+
   showFieldDialog.value = false;
 };
 

@@ -16,7 +16,7 @@ import {
   Trash2,
   ChevronLeft
 } from 'lucide-vue-next';
-import { OrderQuery } from '../../../wailsjs/go/main/App';
+import * as orderApi from '../../api/order';
 import { ElDatePicker } from 'element-plus';
 import * as XLSX from "xlsx";
 
@@ -247,7 +247,7 @@ const fetchOrderData = async () => {
     console.log('请求参数:', requestParams);
     
     // 调用后端的 OrderQuery 函数
-    const result = await OrderQuery(requestParams);
+    const result = await orderApi.queryOrders(requestParams);
     console.log('查询结果:', result);
     
     // 检查返回值类型
@@ -328,7 +328,7 @@ const exportToExcel = async () => {
       requestParams.Endtime = endDate.toISOString();
     }
 
-    const result = await OrderQuery(requestParams);
+    const result = await orderApi.queryOrders(requestParams);
 
     if (result && Array.isArray(result.list)) {
       const exportData = result.list.map((item: any) => ({
