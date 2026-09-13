@@ -33,6 +33,7 @@ func TestGetDayDataRejectsZeroTime(t *testing.T) {
 }
 
 func TestSetProductBelongBindsMap(t *testing.T) {
+	t.Chdir(t.TempDir())
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	r.PUT("/api/checkout/product-belong", SetProductBelong)

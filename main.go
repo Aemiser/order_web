@@ -1,22 +1,16 @@
 package main
 
 import (
-	"embed"
+	"fmt"
 	"order_server/go/core"
 	"order_server/go/flags"
 	"order_server/go/global"
+	"order_server/go/router"
 
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/sirupsen/logrus"
 )
 
-//go:embed all:frontend/dist
-var assets embed.FS
-
 func main() {
-	// Create an instance of the app structure
-	app := NewApp()
 	flags.Parse()
 	global.Config = core.ReadConf()
 	core.InitLogrus()
@@ -25,23 +19,15 @@ func main() {
 	global.AiMap = core.ReadAiMap()
 	global.SystemPrompt = core.Readsystemprompt()
 	flags.Run()
-	// Create application with options
-	err := wails.Run(&options.App{
-		Title: "order_server",
-		//Width:  1500,
-		//Height: 1000,
-		WindowStartState: options.Maximised,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
-		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		OnStartup:        app.startup,
-		Bind: []interface{}{
-			app,
-		},
-	})
 
-	if err != nil {
-		println("Error:", err.Error())
+	port := global.Config.Server.Port
+	if port == 0 {
+		port = 8080
+	}
+	addr := fmt.Sprintf(":%d", port)
+
+	logrus.Infof("HTTP 服务启动: %s", addr)
+	if err := router.Setup().Run(addr); err != nil {
+		logrus.Fatalf("HTTP 服务启动失败: %v", err)
 	}
 }
