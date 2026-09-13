@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { Info, Download, RotateCw, SlidersHorizontal, Wallet, DollarSign } from 'lucide-vue-next';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { Info, Download, RotateCw, SlidersHorizontal, Wallet, DollarSign, RefreshCw, X, Check, AlertTriangle } from 'lucide-vue-next';
 import { ElDatePicker } from 'element-plus';
 import * as XLSX from 'xlsx';
 
@@ -13,7 +13,9 @@ import OrderInputView from './components/Main/OrderInputView.vue';
 import OrderDetailsView from './components/Main/OrderDetailsView.vue';
 import AppSettingsView from './components/Main/AppSettingsView.vue';
 import CheckoutView from './components/Main/Checkout/CheckoutView.vue';
-import { OrderRecognition, GetpreviewData, DeletepreviewData, CreateOrder, SavePriceData, GetDaydata } from '../wailsjs/go/main/App';
+import { OrderRecognition, GetpreviewData, DeletepreviewData, CreateOrder, SavePriceData, GetDaydata, DownloadUpdate, RestartApplication } from '../wailsjs/go/main/App';
+import { EventsOn, EventsOff } from '../wailsjs/runtime/runtime';
+import { updateState } from './stores/update';
 import type { Order } from './types';
 
 
@@ -52,6 +54,52 @@ const fieldData = ref<{
 // 数据加载状态
 const isLoadingFieldData = ref(false);
 const fieldDataLoaded = ref(false);
+
+// 版本更新状态
+const showDownloadDialog = ref(false);
+const downloadProgress = ref(0);
+const downloadTotal = ref(0);
+const downloadPercentage = ref(0);
+const downloadSpeed = ref(0);
+const downloadComplete = ref(false);
+const downloadFilePath = ref('');
+const downloadErrors = ref<string[]>([]);
+const downloadError = ref('');
+
+const logDownloadError = (msg: string) => {
+  const time = new Date().toLocaleTimeString();
+  downloadErrors.value.push(`[${time}] ${msg}`);
+};
+
+// 设置事件监听（download 等运行时事件）
+let unsubscribers: (() => void)[] = [];
+
+onMounted(() => {
+  const unsub1 = EventsOn('download_progress', (current: number, total: number, percentage: number, speed: number) => {
+    downloadProgress.value = current;
+    downloadTotal.value = total;
+    downloadPercentage.value = percentage;
+    downloadSpeed.value = speed;
+  });
+
+  const unsub2 = EventsOn('download_complete', (filepath: string) => {
+    downloadComplete.value = true;
+    downloadFilePath.value = filepath;
+    downloadPercentage.value = 100;
+  });
+
+  const unsub3 = EventsOn('download_error', (err: string) => {
+    downloadError.value = err;
+    logDownloadError(err);
+  });
+
+  unsubscribers = [unsub1, unsub2, unsub3];
+});
+
+onUnmounted(() => {
+  unsubscribers.forEach(fn => fn());
+  EventsOff('download_progress', 'download_complete', 'download_error');
+});
 
 // --- Logic ---
 const analyzeOrders = async (isAppend: boolean = false, modelId: number = 0) => {
@@ -438,6 +486,33 @@ const handleFieldDataLoading = (isLoading: boolean) => {
   console.log('字段数据加载状态:', isLoading);
 };
 
+// 处理版本更新
+const handleUpdateDismiss = () => {
+  updateState.showDialog = false;
+};
+
+const handleStartUpdate = () => {
+  updateState.showDialog = false;
+  showDownloadDialog.value = true;
+  downloadProgress.value = 0;
+  downloadTotal.value = 0;
+  downloadPercentage.value = 0;
+  downloadSpeed.value = 0;
+  downloadComplete.value = false;
+  downloadFilePath.value = '';
+  downloadErrors.value = [];
+  downloadError.value = '';
+  DownloadUpdate();
+};
+
+const handleRestart = () => {
+  RestartApplication();
+};
+
+const handleCloseDownload = () => {
+  showDownloadDialog.value = false;
+};
+
 
 
 </script>
@@ -645,6 +720,108 @@ const handleFieldDataLoading = (isLoading: boolean) => {
         @close="showFieldDialog = false" 
         @save="handleSaveFieldConfig"
       />
+      
+      <!-- Version Update Notification Dialog -->
+      <div v-if="updateState.showDialog" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center">
+              <AlertTriangle class="w-5 h-5 text-blue-400" />
+            </div>
+            <h3 class="text-xl font-bold text-white font-display">发现新版本</h3>
+          </div>
+          <p class="text-slate-300 mb-2">当前版本已过时，建议更新到最新版本以获取更好的体验和最新的功能。</p>
+          <div class="bg-white/[0.03] border border-white/5 rounded-xl p-4 mb-6">
+            <div class="text-sm text-slate-400 mb-1">最新版本</div>
+            <div class="text-lg font-bold text-white">{{ updateState.name }}</div>
+            <div class="text-xs text-slate-500 mt-1">Tag: {{ updateState.version }}</div>
+          </div>
+          <div class="flex justify-end gap-4">
+            <button @click="handleUpdateDismiss" class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all">
+              取消
+            </button>
+            <button @click="handleStartUpdate" class="px-8 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all flex items-center gap-2 shadow-lg shadow-blue-600/20">
+              <Download class="w-4 h-4" />
+              更新
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Download Progress Dialog -->
+      <div v-if="showDownloadDialog" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-lg w-full mx-4 transform transition-all duration-300 scale-100">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center">
+              <Download class="w-5 h-5 text-blue-400" :class="{ 'animate-bounce': !downloadComplete }" />
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-white font-display">{{ downloadComplete ? '下载完成' : '正在下载更新' }}</h3>
+              <p class="text-sm text-slate-500 mt-0.5">{{ updateState.name }}</p>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="mb-4">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-slate-400">{{ downloadComplete ? '下载完毕' : '下载进度' }}</span>
+              <span class="text-white font-bold">{{ downloadPercentage.toFixed(1) }}%</span>
+            </div>
+            <div class="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+              <div 
+                class="h-full rounded-full transition-all duration-300"
+                :class="downloadComplete ? 'bg-emerald-500' : 'bg-blue-600'"
+                :style="{ width: downloadPercentage + '%' }"
+              ></div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-500 mt-1">
+              <span>{{ (downloadProgress / 1024 / 1024).toFixed(1) }} MB / {{ (downloadTotal / 1024 / 1024).toFixed(1) }} MB</span>
+              <span>{{ downloadSpeed.toFixed(2) }} MB/s</span>
+            </div>
+          </div>
+
+          <!-- Error Log -->
+          <div v-if="downloadErrors.length > 0" class="mb-4">
+            <div class="text-xs text-slate-500 mb-1">日志</div>
+            <div class="bg-[#0F1115] border border-white/5 rounded-xl p-3 max-h-32 overflow-y-auto custom-scrollbar">
+              <div v-for="(err, idx) in downloadErrors" :key="idx" class="text-xs text-red-400 font-mono leading-relaxed">{{ err }}</div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-4">
+            <button 
+              v-if="!downloadComplete && !downloadError"
+              disabled
+              class="px-6 py-2 rounded-lg bg-white/5 text-slate-500 font-medium transition-all cursor-not-allowed"
+            >
+              请等待下载完成...
+            </button>
+            <button 
+              v-if="downloadError && !downloadComplete"
+              @click="handleCloseDownload"
+              class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all"
+            >
+              关闭
+            </button>
+            <button 
+              v-if="downloadComplete"
+              @click="handleCloseDownload"
+              class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all"
+            >
+              稍后重启
+            </button>
+            <button 
+              v-if="downloadComplete"
+              @click="handleRestart"
+              class="px-8 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20"
+            >
+              <RefreshCw class="w-4 h-4" />
+              重启应用
+            </button>
+          </div>
+        </div>
+      </div>
       
 
     </main>

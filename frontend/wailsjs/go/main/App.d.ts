@@ -10,6 +10,8 @@ export function CreateOrder(arg1:time.Time):Promise<string>;
 
 export function DeletepreviewData(arg1:number):Promise<string>;
 
+export function DownloadUpdate():Promise<void>;
+
 export function GetAIModel():Promise<Record<string, number>>;
 
 export function GetChackDaydata(arg1:time.Time,arg2:time.Time):Promise<checkout.CheckoutResponse>;
@@ -23,6 +25,8 @@ export function Greet(arg1:string):Promise<string>;
 export function OrderQuery(arg1:order.OrderQueryRequest):Promise<order.OrderQueryResponse>;
 
 export function OrderRecognition(arg1:string,arg2:enum.AIModelType,arg3:enum.RecPreviewType):Promise<Array<ordertutil.ExceladdressInfo>>;
+
+export function RestartApplication():Promise<void>;
 
 export function SaveCheackToExcel():Promise<void>;
 

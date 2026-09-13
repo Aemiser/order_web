@@ -10,6 +10,10 @@ export function DeletepreviewData(arg1) {
   return window['go']['main']['App']['DeletepreviewData'](arg1);
 }
 
+export function DownloadUpdate() {
+  return window['go']['main']['App']['DownloadUpdate']();
+}
+
 export function GetAIModel() {
   return window['go']['main']['App']['GetAIModel']();
 }
@@ -36,6 +40,10 @@ export function OrderQuery(arg1) {
 
 export function OrderRecognition(arg1, arg2, arg3) {
   return window['go']['main']['App']['OrderRecognition'](arg1, arg2, arg3);
+}
+
+export function RestartApplication() {
+  return window['go']['main']['App']['RestartApplication']();
 }
 
 export function SaveCheackToExcel() {

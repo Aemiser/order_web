@@ -8,6 +8,7 @@ import (
 	"order_server/go/server/checkout"
 	alog "order_server/go/server/log"
 	"order_server/go/server/order"
+	"order_server/go/server/version"
 	ordertutil "order_server/go/utils/order"
 	"time"
 
@@ -29,6 +30,7 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	version.CheckUpdate(ctx)
 }
 
 // Greet returns a greeting for the given name
@@ -147,4 +149,12 @@ func (a *App) GetDaydata(statime time.Time, endtime time.Time) checkout.Checkout
 
 func (a *App) SaveCheackToExcel() {
 	checkout.Checkout(a.ctx)
+}
+
+func (a *App) DownloadUpdate() {
+	version.DownloadUpdate(a.ctx)
+}
+
+func (a *App) RestartApplication() {
+	version.RestartApplication(a.ctx)
 }

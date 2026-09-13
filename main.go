@@ -27,9 +27,10 @@ func main() {
 	flags.Run()
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "order_server",
-		Width:  1500,
-		Height: 1000,
+		Title: "order_server",
+		//Width:  1500,
+		//Height: 1000,
+		WindowStartState: options.Maximised,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
