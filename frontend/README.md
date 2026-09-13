@@ -1,37 +1,25 @@
-# OrderMaster Pro - 智能订单管理系统 (本地版)
+# OrderMaster Pro — 前端
 
-这是一个基于 Vue 3 + TypeScript + Tailwind CSS 构建的订单管理系统。
+订单识别与结账系统的 Vue 3 + Vite + TypeScript 前端。项目整体说明（后端、配置、部署）见仓库根目录的 [README.md](../README.md)。
 
-## 功能特点
-- **订单解析**：支持从文本中快速提取订单信息（姓名、电话、地址、商品）。
-- **数据预览**：实时表格展示解析结果。
-- **Excel 导出**：一键导出为标准的 `.xlsx` 文件。
-- **现代化 UI**：深色系豪华仪表盘设计。
+## 开发
 
-## 本地运行步骤
-
-### 1. 安装依赖
 ```bash
 npm install
+npm run dev      # http://localhost:3000，已代理 /api 与 /uploads 到后端 :8080
 ```
 
-### 2. 启动开发服务器
+需先启动后端（仓库根目录执行 `go run main.go`）。
+
+## 构建
+
 ```bash
-npm run dev
-```
-启动后访问 `http://localhost:5173`。
-
-### 3. 构建生产版本
-```bash
-npm run build
+npm run build    # 产物输出到 dist/
 ```
 
-## 项目结构
-- `src/App.vue`: 主应用组件，包含所有逻辑和样式。
-- `src/main.ts`: 应用入口文件。
-- `src/index.css`: 全局样式及 Tailwind 配置。
-- `vite.config.ts`: Vite 配置文件。
+## 结构
 
-## 注意事项
-- 本版本已移除 Gemini AI 依赖，使用本地正则解析逻辑。
-- 解析格式示例：`张三 13800138000 北京市朝阳区XX路 苹果x1`
+- `src/App.vue`：应用外壳与页面切换
+- `src/components/`：业务组件（订单录入 / 预览表格 / 订单详情、结账、设置）
+- `src/api/`：后端接口封装；`request.ts` 为统一请求层，baseURL 可用环境变量 `VITE_API_BASE` 覆盖（默认留空走同域 / 开发代理）
+- `src/index.css`：全局样式与 Tailwind 配置

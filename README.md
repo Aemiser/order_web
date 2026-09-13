@@ -39,7 +39,7 @@ npm run dev
 
 后端：`go build`。前端：`cd frontend && npm run build`（产物输出到 `frontend/dist/`）。
 
-生产部署时，前端静态产物可与后端分域部署，此时需自行处理跨域：后端已配置 CORS 允许来源列表，见 `settings.yaml` 的 `server.allowOrigins`。
+生产部署时，前端静态产物可与后端分域部署：构建前设置环境变量 `VITE_API_BASE` 指向后端地址（如 `VITE_API_BASE=https://api.example.com npm run build`），并把前端域名加入后端 `settings.yaml` 的 `server.allowOrigins`。同域部署（由后端托管前端产物）无需设置该变量。
 
 ## 配置说明
 

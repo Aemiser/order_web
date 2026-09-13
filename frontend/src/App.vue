@@ -493,9 +493,6 @@ const handleFieldDataLoading = (isLoading: boolean) => {
         <AppSettingsView
           v-if="activeTab === 'settings'"
         />
-
-       <!-- <demo />
-        <Fidld /> -->
       </div>
 
       <!-- Bottom Action Bar (Only show for Input view) -->
