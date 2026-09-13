@@ -246,7 +246,7 @@ const fetchOrderData = async () => {
     
     console.log('请求参数:', requestParams);
     
-    // 调用后端的 OrderQuery 函数
+    // 调用后端订单查询接口
     const result = await orderApi.queryOrders(requestParams);
     console.log('查询结果:', result);
     
