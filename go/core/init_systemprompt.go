@@ -11,7 +11,7 @@ import (
 func Readsystemprompt() (str string) {
 	file, err := os.Open("systemPrompt.txt")
 	if err != nil {
-		logrus.Errorf("Error:", err)
+		logrus.Errorf("读取 systemPrompt 文件失败: %v", err)
 		return
 	}
 	defer file.Close()
