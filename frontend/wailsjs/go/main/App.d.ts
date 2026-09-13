@@ -4,7 +4,6 @@ import {time} from '../models';
 import {checkout} from '../models';
 import {ordertutil} from '../models';
 import {order} from '../models';
-import {enum} from '../models';
 
 export function CreateOrder(arg1:time.Time):Promise<string>;
 
@@ -24,7 +23,7 @@ export function Greet(arg1:string):Promise<string>;
 
 export function OrderQuery(arg1:order.OrderQueryRequest):Promise<order.OrderQueryResponse>;
 
-export function OrderRecognition(arg1:string,arg2:enum.AIModelType,arg3:enum.RecPreviewType):Promise<Array<ordertutil.ExceladdressInfo>>;
+export function OrderRecognition(arg1:string,arg2:number,arg3:number):Promise<Array<ordertutil.ExceladdressInfo>>;
 
 export function RestartApplication():Promise<void>;
 
@@ -38,4 +37,4 @@ export function SetProductBelong(arg1:Record<string, Array<string>>):Promise<voi
 
 export function SetpreviewData(arg1:ordertutil.ExceladdressInfo):Promise<string>;
 
-export function StartStreamRecognition(arg1:string,arg2:enum.AIModelType,arg3:enum.RecPreviewType):Promise<void>;
+export function StartStreamRecognition(arg1:string,arg2:number,arg3:number):Promise<void>;
