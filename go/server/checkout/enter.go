@@ -1,21 +1,19 @@
 package checkout
 
 import (
-	"context"
 	"fmt"
 	"order_server/go/core"
 	"order_server/go/global"
 	"order_server/go/models"
 	ordertutil "order_server/go/utils/order"
 	time2 "order_server/go/utils/time"
-	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type Spec struct {
@@ -142,7 +140,8 @@ func AddcheckoutData(sm *SpecManager) {
 	fmt.Println("====================")
 }
 
-func Checkout(ctx context.Context) {
+// Checkout 生成财务账单 Excel，返回生成文件的绝对路径
+func Checkout() (string, error) {
 	fmt.Println("========== 商品销售统计Excel生成器 ==========")
 
 	// 创建规格管理器
@@ -156,27 +155,18 @@ func Checkout(ctx context.Context) {
 
 	// 生成Excel文件
 	fmt.Println("\n========== 生成Excel文件 ==========")
-
-	// 选择保存目录
-	saveDir, err := selectSaveDirectory(ctx)
-	if err != nil {
-		fmt.Printf("❌ 选择保存目录失败: %v\n", err)
-		return
-	}
-
 	fmt.Println("begtime:", begtime2)
 	fmt.Println("endtime:", endtime2)
-	// 生成带时间戳的文件名
-	filename := fmt.Sprintf("%s_%s结账.xlsx", begtime2, endtime2)
-	filePath := fmt.Sprintf("%s/%s", saveDir, filename)
 
-	err = sm.GenerateExcel(filePath)
-	if err != nil {
+	// 生成带时间戳的文件名，输出到配置的导出目录
+	filename := fmt.Sprintf("%s_%s结账.xlsx", begtime2, endtime2)
+	filePath := filepath.Join(global.Config.SavePath.Excel, filename)
+
+	if err := sm.GenerateExcel(filePath); err != nil {
 		fmt.Printf("❌ 生成Excel失败: %v\n", err)
-	} else {
-		fmt.Printf("✅ Excel生成成功！文件: %s\n", filePath)
-		fmt.Printf("📁 文件保存在: %s\n", saveDir)
+		return "", err
 	}
+	fmt.Printf("✅ Excel生成成功！文件: %s\n", filePath)
 
 	// 显示一些统计信息
 	fmt.Println("\n========== 统计信息 ==========")
@@ -184,22 +174,11 @@ func Checkout(ctx context.Context) {
 	fmt.Printf("总商品种类: %d\n", len(sm.ProductMap))
 	fmt.Printf("总销售天数: %d\n", len(sm.DateMap))
 
-	// 显示所有商品
-	fmt.Println("\n📦 商品列表:")
-	for _, product := range sm.ProductMap {
-		fmt.Printf("  - %s (共%d种规格, 总销量:%d)\n",
-			product.Name, len(product.Specs), product.TotalQty)
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		return filePath, nil
 	}
-
-	// 显示所有日期
-	fmt.Println("\n📅 销售日期:")
-	dates := make([]string, 0, len(sm.DateMap))
-	for date := range sm.DateMap {
-		dates = append(dates, date)
-	}
-	for _, date := range dates {
-		fmt.Printf("  - %s\n", date)
-	}
+	return absPath, nil
 }
 
 // 获取指定月份数据
@@ -227,54 +206,6 @@ func GetMonthdata(timedate time.Time) {
 		fmt.Println(k, v)
 	}
 
-}
-
-// 选择保存目录
-func selectSaveDirectory(ctx context.Context) (string, error) {
-	// 使用 Wails 运行时的文件夹选择对话框
-	dir, err := runtime.OpenDirectoryDialog(ctx, runtime.OpenDialogOptions{
-		Title:                "选择保存目录",
-		DefaultDirectory:     ".",
-		CanCreateDirectories: true,
-	})
-	if err != nil {
-		return "", fmt.Errorf("打开文件夹对话框失败: %w", err)
-	}
-
-	// 检查用户是否取消选择
-	if dir == "" {
-		return "", fmt.Errorf("用户取消选择")
-	}
-
-	// 验证目录是否存在
-	info, err := os.Stat(dir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// 尝试创建目录
-			err = os.MkdirAll(dir, 0755)
-			if err != nil {
-				return "", fmt.Errorf("创建目录失败: %w", err)
-			}
-		} else {
-			return "", fmt.Errorf("检查目录失败: %w", err)
-		}
-	} else {
-		// 验证是否为目录
-		if !info.IsDir() {
-			return "", fmt.Errorf("选择的路径不是目录")
-		}
-	}
-
-	// 验证目录是否可写
-	testFile := fmt.Sprintf("%s/.test_write.txt", dir)
-	err = os.WriteFile(testFile, []byte("test"), 0644)
-	if err != nil {
-		return "", fmt.Errorf("目录不可写: %w", err)
-	}
-	// 清理测试文件
-	os.Remove(testFile)
-
-	return dir, nil
 }
 
 // 获取指定日期的数据

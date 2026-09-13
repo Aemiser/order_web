@@ -148,7 +148,7 @@ func (a *App) GetDaydata(statime time.Time, endtime time.Time) checkout.Checkout
 }
 
 func (a *App) SaveCheackToExcel() {
-	checkout.Checkout(a.ctx)
+	checkout.Checkout()
 }
 
 func (a *App) DownloadUpdate() {
