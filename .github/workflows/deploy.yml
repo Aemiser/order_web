@@ -99,6 +99,16 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: production
+    # 密钥一律经 env 传递，不用 ${{ secrets.* }} 直接内插进 shell：
+    # 内插发生在 shell 解析之前，密钥里若含引号或 $ 会被当作语法执行。
+    env:
+      ECS_HOST: ${{ secrets.ECS_HOST }}
+      ECS_PORT: ${{ secrets.ECS_PORT }}
+      ECS_USER: ${{ secrets.ECS_USER }}
+      ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
+      ECS_KNOWN_HOSTS: ${{ secrets.ECS_KNOWN_HOSTS }}
+      APP_HEALTH_URL: ${{ secrets.APP_HEALTH_URL }}
+      APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -109,32 +119,31 @@ jobs:
       - name: 准备 SSH
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.ECS_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          # 固定 known_hosts 而非 ssh-keyscan，避免首次连接被中间人
-          printf '%s\n' "${{ secrets.ECS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
+          printf '%s\n' "$ECS_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$ECS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
 
       - name: 上传部署包与脚本
         run: |
-          SSH="ssh -i ~/.ssh/deploy_key -p ${{ secrets.ECS_PORT }}"
-          SCP="scp -i ~/.ssh/deploy_key -P ${{ secrets.ECS_PORT }}"
-          DEST="${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}"
-          $SSH "$DEST" "mkdir -p ${{ env.STAGING_DIR }}"
-          $SCP bundle.tgz "$DEST:${{ env.STAGING_DIR }}/bundle.tgz"
-          $SCP scripts/remote_deploy.sh "$DEST:${{ env.STAGING_DIR }}/remote_deploy.sh"
+          # StrictHostKeyChecking=yes 让固定 known_hosts 真正生效，主机密钥不符即拒绝连接；
+          # BatchMode=yes 避免凭据缺失时卡在密码交互上直到超时。
+          SSH_OPTS="-i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes -o BatchMode=yes"
+          DEST="$ECS_USER@$ECS_HOST"
+          ssh $SSH_OPTS -p "$ECS_PORT" "$DEST" "mkdir -p $STAGING_DIR"
+          scp $SSH_OPTS -P "$ECS_PORT" bundle.tgz "$DEST:$STAGING_DIR/bundle.tgz"
+          scp $SSH_OPTS -P "$ECS_PORT" scripts/remote_deploy.sh "$DEST:$STAGING_DIR/remote_deploy.sh"
 
       - name: 执行远程部署
         run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ secrets.ECS_PORT }} \
-            "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}" \
-            "bash ${{ env.STAGING_DIR }}/remote_deploy.sh ${{ env.STAGING_DIR }}/bundle.tgz"
+          ssh -i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            -p "$ECS_PORT" "$ECS_USER@$ECS_HOST" \
+            "bash $STAGING_DIR/remote_deploy.sh $STAGING_DIR/bundle.tgz"
 
       - name: 公网冒烟测试
         run: |
-          curl -fsS -m 20 "${{ secrets.APP_HEALTH_URL }}"
+          curl -fsS -m 20 "$APP_HEALTH_URL"
           echo
-          curl -fsS -m 20 -o /dev/null -w "前端 HTTP %{http_code}\n" "${{ secrets.APP_BASE_URL }}"
+          curl -fsS -m 20 -o /dev/null -w "前端 HTTP %{http_code}\n" "$APP_BASE_URL"
 
       - name: 清理 SSH 凭据
         if: always()
