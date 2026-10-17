@@ -13,6 +13,9 @@ go/
   conf/ core/ global/ flags/ models/ utils/ common/   配置、初始化与公共组件
   config/       运行时配置（settings.yaml、aimap.json、productbelong.json、systemPrompt.txt）
 web/            Vue 3 + Vite 前端
+deploy/         systemd 单元与 nginx 子路径片段模板
+scripts/        部署期在服务器上执行的脚本
+.github/        CI/CD 工作流
 main.go         程序入口
 ```
 
@@ -50,3 +53,62 @@ npm run dev
 - `server`：服务监听端口与 CORS 允许来源。
 
 `settings.yaml` 含真实密钥（数据库密码、SMTP 授权码、AI apikey），已被 `.gitignore` 忽略，请勿提交到公开仓库；仓库内仅保留占位符模板 `go/config/settings.example.yaml`。
+
+## 部署
+
+推送到 `main` 分支即自动发布到生产（`.github/workflows/deploy.yml`）。流水线为
+`校验 → 构建 → 部署`三段：交叉编译 Linux 二进制、以子路径基准构建前端、打包后经 SSH
+上传，由 `scripts/remote_deploy.sh` 在服务器上完成替换、健康检查与失败回滚。
+
+### 架构
+
+后端由 systemd 单元 `order-web.service`（模板见 `deploy/order_web.service`）托管，监听
+本机回环端口，不对外暴露。nginx 通过子路径 `/rec` 反代：前端静态资源走 `alias`，
+`/rec/api/`、`/rec/uploads/` 剥掉前缀后转发给后端，SPA 深链回落到 `/rec/index.html`。
+
+前端因此必须构建到 `/rec` 前缀，由 `web/.env.production` 的 `VITE_BASE=/rec/` 与
+`VITE_API_BASE=/rec` 控制。**若同一域名的根路径已被别的应用占用**（`/api/`、`/uploads/`
+已反代到其他后端），缺少这层前缀会让请求打到别人的服务上。nginx 片段模板见
+`deploy/nginx-rec.conf.example`。
+
+SSE 流式端点（`/api/order/recognition/stream`）要求 nginx 侧 `proxy_buffering off`，
+否则增量会被攒到结束才吐出，模板中已包含。
+
+### 需要配置的仓库 Secrets
+
+以下值均不得写入仓库，只存在于 GitHub Secrets：
+
+| Secret | 说明 |
+| --- | --- |
+| `ECS_HOST` | 服务器地址 |
+| `ECS_PORT` | SSH 端口 |
+| `ECS_USER` | SSH 用户 |
+| `ECS_SSH_KEY` | 部署专用私钥（`~/.ssh/github_actions_deploy`） |
+| `ECS_KNOWN_HOSTS` | 服务器主机公钥条目，用于固定 known_hosts 防中间人 |
+| `APP_HEALTH_URL` | 公网健康检查完整 URL |
+| `APP_BASE_URL` | 公网前端入口完整 URL |
+
+部署私钥应为一把**专用**密钥，不要复用个人日常登录密钥；泄露时可单独吊销。
+
+### 服务器上不可被部署覆盖的文件
+
+`scripts/remote_deploy.sh` 只同步二进制、前端产物与静态配置（`aimap.json`、
+`systemPrompt.txt`）。以下两个文件属服务器本地资产，脚本永不覆盖：
+
+- `go/config/settings.yaml` —— 含密钥，且端口、CORS 来源等生产取值与开发环境不同；
+- `go/config/productbelong.json` —— 会被 `PUT /api/checkout/product-belong` 在运行期回写，
+  覆盖即丢失线上数据。
+
+首次部署需人工把这两个文件放到 `/opt/order_web/go/config/` 下。
+
+### 手动运维
+
+```bash
+systemctl status order-web.service          # 服务状态
+journalctl -u order-web.service -f          # 实时日志
+tail -f /opt/order_web/logs/$(date +%F)/order_server.log   # 应用日志
+
+# 回滚到上一版（部署脚本会自动保留 server.prev 与 order_web.prev）
+mv /opt/order_web/server.prev /opt/order_web/server && systemctl restart order-web.service
+```
+

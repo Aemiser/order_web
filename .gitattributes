@@ -1,0 +1,12 @@
+# 仓库在 Windows 上开发，但 .sh 会被 Linux 上的 bash 执行。
+# CRLF 会让 bash 报 "$'\r': command not found"，故强制这些类型使用 LF。
+* text=auto
+
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+*.png  binary
+*.jpg  binary
+*.woff2 binary
+*.xlsx binary

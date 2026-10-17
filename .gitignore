@@ -1,5 +1,7 @@
 # 构建产物
-build/bin
+build/
+bundle/
+bundle.tgz
 web/dist
 *.md5
 

@@ -1,0 +1,25 @@
+[Unit]
+Description=Order Web Backend (订单识别与结账系统)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=orderweb
+Group=orderweb
+# 应用以相对路径读取 ./go/config/*，工作目录必须是应用根，否则配置加载失败
+WorkingDirectory=/opt/order_web
+Environment=GIN_MODE=release
+ExecStart=/opt/order_web/server
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/order_web
+
+[Install]
+WantedBy=multi-user.target

@@ -2,12 +2,16 @@ package core
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
 )
 
+// Readsystemprompt 加载 AI 提示词模板。
+//
+// 提示词含 few-shot 示例，属业务资产，不打印正文以免示例内容进入 systemd journal。
+// 读取循环先累加再判错：文件末尾无换行时 ReadString 会返回 (尾行, io.EOF)，
+// 若先判错后累加会静默丢掉最后一行示例。
 func Readsystemprompt() (str string) {
 	file, err := os.Open("./go/config/systemPrompt.txt")
 	if err != nil {
@@ -17,16 +21,14 @@ func Readsystemprompt() (str string) {
 	defer file.Close()
 
 	reader := bufio.NewReader(file)
-
 	for {
-		line, err1 := reader.ReadString('\n')
-		if err1 != nil {
+		line, readErr := reader.ReadString('\n')
+		str += line
+		if readErr != nil {
 			break
 		}
-		fmt.Print(line)
-		str += line
 	}
 
-	fmt.Println(str)
+	logrus.Infof("systemPrompt 加载完成，共 %d 字符", len(str))
 	return
 }

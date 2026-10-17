@@ -1,0 +1,57 @@
+# nginx 子路径部署片段（模板）
+#
+# 用法：把 <YOUR_DOMAIN> 与 <BACKEND_PORT> 替换为真实值后，将以下 location 块
+# 加入该域名对应的 server{} 内，然后 nginx -t && nginx -s reload。
+#
+# 为什么前端必须构建到 /rec 前缀：
+#   若该域名的 server{} 已把 /api/、/uploads/ 代理给别的应用，本项目若也请求
+#   /api/ 就会打到别人的后端。因此前端构建时设 VITE_BASE=/rec/ 与
+#   VITE_API_BASE=/rec（见 web/.env.production），所有请求走 /rec/api/、
+#   /rec/uploads/，由下面的 location 剥掉 /rec 前缀再转发给本项目后端。
+#
+# 本文件不含真实域名与 IP，可安全入库。
+
+# /rec 无斜杠时补斜杠，否则相对资源路径会解析错位
+location = /rec {
+    return 301 /rec/;
+}
+
+# 前端静态资源 + SPA fallback
+location /rec/ {
+    alias /www/wwwroot/order_web/;
+    index index.html;
+    try_files $uri $uri/ /rec/index.html;
+}
+
+# 后端 API。proxy_pass 结尾的 / 会剥掉 /rec 前缀。
+# SSE 端点（/api/order/recognition/stream）必须关闭缓冲，否则流式响应会被
+# nginx 攒到结束才吐出，前端看不到增量。
+location /rec/api/ {
+    proxy_pass http://127.0.0.1:<BACKEND_PORT>/api/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Connection '';
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_connect_timeout 120s;
+    proxy_send_timeout 600s;
+    proxy_read_timeout 600s;
+    client_max_body_size 50m;
+}
+
+# 导出的 Excel 下载
+location /rec/uploads/ {
+    proxy_pass http://127.0.0.1:<BACKEND_PORT>/uploads/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+
+# 存活探针，供发布流水线校验
+location = /rec/healthz {
+    proxy_pass http://127.0.0.1:<BACKEND_PORT>/healthz;
+    access_log off;
+}

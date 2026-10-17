@@ -1,0 +1,141 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 同一时刻只允许一个发布在跑；不取消进行中的任务，避免部署到一半被中断
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  GO_VERSION: '1.25'
+  NODE_VERSION: '22'
+  APP_DIR: /opt/order_web
+  STAGING_DIR: /opt/order_web_staging
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: 校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test ./...
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 前端类型检查
+        working-directory: web
+        run: |
+          npm ci
+          npm run lint
+
+  build:
+    name: 构建
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: 交叉编译 Linux 二进制
+        run: |
+          mkdir -p bundle/config
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -trimpath -ldflags="-s -w" -o bundle/server .
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 构建前端
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: 组装部署包
+        run: |
+          # 仅打包静态配置；settings.yaml 与 productbelong.json 属服务器本地资产，不参与发布
+          cp go/config/aimap.json go/config/systemPrompt.txt bundle/config/
+          tar -czf bundle/web.tgz -C web/dist .
+          tar -czf bundle.tgz -C bundle .
+          ls -la bundle.tgz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deploy-bundle
+          path: bundle.tgz
+          retention-days: 5
+          if-no-files-found: error
+
+  deploy:
+    name: 部署到生产
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: deploy-bundle
+
+      - name: 准备 SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.ECS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # 固定 known_hosts 而非 ssh-keyscan，避免首次连接被中间人
+          printf '%s\n' "${{ secrets.ECS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: 上传部署包与脚本
+        run: |
+          SSH="ssh -i ~/.ssh/deploy_key -p ${{ secrets.ECS_PORT }}"
+          SCP="scp -i ~/.ssh/deploy_key -P ${{ secrets.ECS_PORT }}"
+          DEST="${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}"
+          $SSH "$DEST" "mkdir -p ${{ env.STAGING_DIR }}"
+          $SCP bundle.tgz "$DEST:${{ env.STAGING_DIR }}/bundle.tgz"
+          $SCP scripts/remote_deploy.sh "$DEST:${{ env.STAGING_DIR }}/remote_deploy.sh"
+
+      - name: 执行远程部署
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.ECS_PORT }} \
+            "${{ secrets.ECS_USER }}@${{ secrets.ECS_HOST }}" \
+            "bash ${{ env.STAGING_DIR }}/remote_deploy.sh ${{ env.STAGING_DIR }}/bundle.tgz"
+
+      - name: 公网冒烟测试
+        run: |
+          curl -fsS -m 20 "${{ secrets.APP_HEALTH_URL }}"
+          echo
+          curl -fsS -m 20 -o /dev/null -w "前端 HTTP %{http_code}\n" "${{ secrets.APP_BASE_URL }}"
+
+      - name: 清理 SSH 凭据
+        if: always()
+        run: rm -f ~/.ssh/deploy_key ~/.ssh/known_hosts
