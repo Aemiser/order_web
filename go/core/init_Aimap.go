@@ -7,7 +7,7 @@ import (
 )
 
 func ReadAiMap() (mapps map[string]int) {
-	ptjsonpath := "./aimap.json"
+	ptjsonpath := "./go/config/aimap.json"
 	f, err := os.Open(ptjsonpath)
 	if err != nil {
 		fmt.Println("open file err = ", err)

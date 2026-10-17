@@ -1,5 +1,28 @@
+# 构建产物
 build/bin
+web/dist
+*.md5
+
+# 依赖
 node_modules
-frontend/dist
+
+# 运行期产物
 logs
 uploads
+
+# 敏感配置：含数据库密码、SMTP 授权码、AI apikey，严禁入库
+# 模板见 go/config/settings.example.yaml，真实文件由各环境自行放置
+go/config/settings.yaml
+*.pem
+*.key
+*.p12
+id_rsa*
+id_ed25519*
+.env.local
+.env.*.local
+
+# 编辑器 / IDE 状态（.idea/dataSources.xml 会明文记录数据库连接地址）
+.idea/
+.trae/
+.vscode/
+*.iml

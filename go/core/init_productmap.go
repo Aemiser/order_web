@@ -7,7 +7,7 @@ import (
 )
 
 func ReadProductBelongMap() (mapps map[string][]string) {
-	ptjsonpath := "./productbelong.json"
+	ptjsonpath := "./go/config/productbelong.json"
 	f, err := os.Open(ptjsonpath)
 	if err != nil {
 		fmt.Println("open file err = ", err)
@@ -30,8 +30,8 @@ func WriteProductBelongMap(dataMap map[string][]string) {
 		fmt.Printf("Map转换为JSON字符串失败，异常: %s\n", err)
 		return
 	}
-	// 写进文件
-	err = os.WriteFile("./productbelong.json", jsonBytes, 0644)
+	// 写进文件（写回路径必须与 ReadProductBelongMap 的读取路径一致，B4）
+	err = os.WriteFile("./go/config/productbelong.json", jsonBytes, 0644)
 	if err != nil {
 		fmt.Printf("写入JSON文件失败，异常: %s\n", err)
 		return

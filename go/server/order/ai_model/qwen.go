@@ -13,9 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// 配置项
+// 配置项（apikey 经 global.Config.AiModel.Qwen.Apikey 读取，禁止硬编码，B4/T3）
 const (
-	APIKey    = "***REMOVED***" // 【重要】请在此处替换为您的 DashScope API Key
 	APIURL    = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
 	ModelName = "qwen-plus" // 可选：qwen-turbo, qwen-plus, qwen-max
 )

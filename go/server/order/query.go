@@ -23,7 +23,7 @@ type OrderQueryResponse struct {
 	Count int                           `json:"count"`
 }
 
-func OrderQuery(oq OrderQueryRequest) (resp OrderQueryResponse) {
+func OrderQuery(oq OrderQueryRequest) (resp OrderQueryResponse, err error) {
 
 	var addresslist = oq.Addresssinfo
 	fmt.Println("参数列表：", addresslist)
@@ -32,9 +32,13 @@ func OrderQuery(oq OrderQueryRequest) (resp OrderQueryResponse) {
 	var option = common.Options{
 		PageInfo:     oq.PageInfo,
 		DefaultOrder: "created_at",
-		Likes:        []string{"recipient", "address", "phone", "product_specs", "remarks"},
-		Debug:        true,
-		Where:        nil,
+		// Likes 必须与数据库实际列名逐字符一致（B3.2，2026-10-17 实测修正）：
+		// product_specs 为实际蛇形列名——GORM 对 tag `gorm:"productSpecs;type:json"` 中
+		// 无 column: 前缀的段不识别，列名按默认蛇形命名生成（详见 backend-architecture B3.2.1 存量登记）；
+		// province 为 T10 新增列（tag 显式 column:province）。
+		Likes: []string{"recipient", "address", "phone", "product_specs", "remarks", "province"},
+		Debug: true,
+		Where: nil,
 	}
 	// 判断时间范围
 	if !(oq.Starttime.IsZero() && oq.Endtime.IsZero()) {
@@ -46,6 +50,7 @@ func OrderQuery(oq OrderQueryRequest) (resp OrderQueryResponse) {
 
 	_list, count, err := common.ListQuery(addresslist, option)
 	if err != nil {
+		// B2 不吞错（契约 §3.5 变更4）：查询失败必须上抛 50000，不再静默返回空列表
 		logrus.Errorf("查询失败 %s", err)
 		return
 	}

@@ -223,17 +223,22 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 		}
 	}
 
-	// 起始日期
-	begindate := time.Date(statime.Year(), statime.Month(), statime.Day()+1, 0, 0, 0, 0, time.Local)
+	// 起始日期（契约 §3.7 修复：原 statime.Day()+1 少算第一天，起始应含当日；
+	// 前端 startTime 已为当日 00:00:00，此处归一化到当日日界即可）
+	begindate := time.Date(statime.Year(), statime.Month(), statime.Day(), 0, 0, 0, 0, time.Local)
 	begtime2 = fmt.Sprintf("%d年%d月%d日", begindate.Year(), int(begindate.Month()), begindate.Day())
 	// 截至日期
 	enddate := time.Date(endtime.Year(), endtime.Month(), endtime.Day(), 23, 59, 59, 0, time.Local)
 	endtime2 = fmt.Sprintf("%d年%d月%d日", endtime.Year(), int(endtime.Month()), endtime.Day())
 
-	// 查询数据库获取日期数据
+	// 查询数据库获取日期数据（契约 §3.7 修复：先构建带条件的 query 再 Count 再 Find——
+	// 原 Count 在 Where 之前执行，统计的是全表数而非区间条数；原 Order 在 Find 之后属死代码）
 	var _list []models.AddressInfo
 	var count int64
-	global.Db.Debug().Model(&_list).Count(&count).Where("created_at >= ? AND created_at <= ?", begindate, enddate).Find(&_list).Order("created_at")
+	q := global.Db.Debug().Model(&models.AddressInfo{}).
+		Where("created_at >= ? AND created_at <= ?", begindate, enddate)
+	q.Count(&count)
+	q.Order("created_at").Find(&_list)
 	addresinfolist = _list
 	// 检查是否存在新商品
 	newSpecList := ordertutil.Specchecking(_list)
@@ -298,17 +303,16 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 	}
 
 	// Map转List
+	// Spec 价格默认 0（未配置态），由响应构建后的 applyPrices 从持久化价格统一回填（契约 §3.7 行为变更 3）
 	var ProSPecsList []ProSPecs
 	sid := uint(1)
 	for k, v := range ProSPecsMap {
 		var speclist = make([]Spec, 0)
 		for _, vv := range v {
-			// 这里可以从全局变量或数据库中获取价格信息
-			// 暂时使用默认值
 			speclist = append(speclist, Spec{
 				Name:         vv,
-				PricePerKg:   0, // 默认为0，需要用户填写
-				PricePerItem: 0, // 默认为0，需要用户填写
+				PricePerKg:   0, // 未配置默认 0，applyPrices 回填
+				PricePerItem: 0, // 未配置默认 0，applyPrices 回填
 			})
 		}
 		ppcs := ProSPecs{
@@ -391,6 +395,10 @@ func GetDaydata(statime time.Time, endtime time.Time) CheckoutResponse {
 		TableData: tableData,
 		TotalRow:  totalRow,
 	}
+	// 契约 §3.7 行为变更 3/4：ProSPecs 价格从持久化回填，并直接计算三个价格行
+	// （与 TotalRow 同序同长，TotalAmountRow[i]=TotalRow[i]×PricePerItemRow[i]），
+	// 服务重启后价格仍回显；读取失败降级空 map（价格为 0），不阻塞结账查询
+	applyPrices(&resp, LoadPriceMap())
 	checkoutresp = resp
 	return resp
 }
@@ -401,68 +409,40 @@ func SetFieldList(mapp map[string][]string) {
 	core.WriteProductBelongMap(mapp)
 }
 
-// 设置金额
-func SetPrice(_list []ProPriceRequest) CheckoutResponse {
-	proPrice = _list
-	fmt.Println("_list", _list)
-	var pricePerkgRow, pricePerItemRow, totalAmountRow []float64
-	// 获取该商品 ->规格的总件数
-	for i := range _list { // 使用索引修改值
-		for k, v := range gspecsMap {
-			if _list[i].ProductName == k { // 定位商品
-				for spec, total := range v {
-					if spec == _list[i].Spec { // 定位规格
-						_list[i].Total = total
-						// 获取规格的斤数
-						re, err := regexp.Compile(`\d+`)
-						if err != nil {
-							logrus.Errorf("设置金额获取规格的斤数error: %v", err)
-						}
-						number := re.FindString(spec)
-						num, err := strconv.Atoi(number)
-						if err != nil {
-							logrus.Errorf("设置金额转换error: %v", err)
-						}
+// SetPrice 保存价格并返回重算后的结账响应（契约 §3.6 行为变更 1/2/4）：
+//  1. 先 SavePriceConfig 单事务落库（pricePerItem==0 时按 元/斤×斤数 推导后持久化），
+//     任一项失败整体回滚并返回 error，由上层转 50000——先落库再返回，杜绝「响应已变、
+//     库未更新」的半更新态（原实现仅改内存响应、不落库，重启即丢）；
+//  2. 成功后维护 proPrice（Excel 导出路径 AddcheckoutData 消费，回填落库推导单价，
+//     避免用户未填每件价时 Excel 金额算成 0）；
+//  3. 再以最新生效价格 applyPrices 重算 checkoutresp：ProSPecs 价格回填 + 三个价格行
+//     （与 TotalRow 同序同长，TotalAmountRow[i]=TotalRow[i]×PricePerItemRow[i]）。
+//
+// 已知边界（B6 内存态，可接受）：checkoutresp 为 GetDaydata 构建的当前区间响应副本，
+// 服务重启后未先查 daydata 直接调 SetPrice 时它为空响应——价格仍正常落库，
+// 待下次 daydata 查询时回显。
+func SetPrice(_list []ProPriceRequest) (CheckoutResponse, error) {
+	// 先落库：单事务 upsert（RUL-1 不保留历史），失败返回 error（上层转 50000）
+	if err := SavePriceConfig(_list); err != nil {
+		logrus.Errorf("保存价格配置失败: %v", err)
+		return CheckoutResponse{}, err
+	}
 
-						if _list[i].PricePerItem == 0.00 {
-							_list[i].PricePerItem = _list[i].PricePerKg * float64(num) //每斤/元  * 斤 = 每件/元
-						}
+	// 落库成功后以最新生效价格重算
+	priceMap := LoadPriceMap()
 
-						// 计算总金额
-						_list[i].TotalAmount = float64(_list[i].Total) * _list[i].PricePerItem
-					}
-				}
-			}
+	// 为 Excel 导出路径（AddcheckoutData）维护价格快照：
+	// PricePerItem 回填落库推导值，保证导出金额口径与库中一致
+	proPrice = make([]ProPriceRequest, len(_list))
+	for i := range _list {
+		proPrice[i] = _list[i]
+		if pc, ok := priceMap[_list[i].ProductName][_list[i].Spec]; ok {
+			proPrice[i].PricePerKg = pc.PricePerKg
+			proPrice[i].PricePerItem = pc.PricePerItem
 		}
 	}
 
-	// 给副本响应数据赋值
-	for i := range checkoutresp.ProSPecs { // 使用索引修改值
-		for _, item := range _list { //
-			if checkoutresp.ProSPecs[i].Name == item.ProductName { // 定位商品
-				for j, spec := range checkoutresp.ProSPecs[i].Specs { // 遍历商品规格
-					if spec.Name == item.Spec { // 定位规格
-						checkoutresp.ProSPecs[i].Specs[j].PricePerKg = item.PricePerKg
-						checkoutresp.ProSPecs[i].Specs[j].PricePerItem = item.PricePerItem
-
-						pricePerkgRow = append(pricePerkgRow, item.PricePerKg)
-						pricePerItemRow = append(pricePerItemRow, item.PricePerItem)
-						totalAmountRow = append(totalAmountRow, item.TotalAmount)
-					}
-
-				}
-			}
-		}
-	}
-	fmt.Println("pricePerkgRow", pricePerkgRow)
-	fmt.Println("pricePerItemRow", pricePerItemRow)
-	fmt.Println("totalAmountRow", totalAmountRow)
-	//设置返回值
-	checkoutresp.PricePerKgRow = pricePerkgRow
-	checkoutresp.PricePerItemRow = pricePerItemRow
-	checkoutresp.TotalAmountRow = totalAmountRow
-
-	fmt.Println("checkoutresp", checkoutresp)
-	// 为execl添加数据
-	return checkoutresp
+	// 重算响应：ProSPecs 价格回填 + 三个价格行（checkoutresp 为 GetDaydata 构建的区间副本）
+	applyPrices(&checkoutresp, priceMap)
+	return checkoutresp, nil
 }

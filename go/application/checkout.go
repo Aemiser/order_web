@@ -16,7 +16,8 @@ func SetProductBelong(mapp map[string][]string) {
 }
 
 // SetPrice 保存价格并返回更新的结账数据
-func SetPrice(list []checkout.ProPriceRequest) checkout.CheckoutResponse {
+// 契约 §3.6：保存事务失败（任一项失败整体回滚）时透传 error，由 handler 转 50000
+func SetPrice(list []checkout.ProPriceRequest) (checkout.CheckoutResponse, error) {
 	return checkout.SetPrice(list)
 }
 

@@ -7,10 +7,12 @@ import (
 
 type ExceladdressInfo struct {
 	CreateAt     time.Time `json:"createdAt"`
+	ID           uint      `json:"id"`
 	PreviewID    uint      `json:"VID"`
 	Recipient    string    `json:"收件人"`
 	Phone        string    `json:"手机号"`
 	Address      string    `json:"收货地址"`
+	Province     string    `json:"省份"`
 	ProductSpecs string    `json:"商品规格"`
 	Remarks      string    `json:"备注"`
 }
@@ -19,9 +21,11 @@ func AddressToExcelAddress(addresss []models.AddressInfo) (exceladdress []Excela
 	for _, address := range addresss {
 		exceladdress = append(exceladdress, ExceladdressInfo{
 			PreviewID:    address.PreviewID,
+			ID:           address.ID,
 			CreateAt:     address.CreatedAt,
 			Address:      address.Address,
 			Phone:        address.Phone,
+			Province:     address.Province,
 			ProductSpecs: address.ProductSpecsString(false),
 			Recipient:    address.Recipient,
 			Remarks:      address.Remarks,

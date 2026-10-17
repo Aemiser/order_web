@@ -27,6 +27,7 @@ func TestSetupRegistersAllEndpoints(t *testing.T) {
 	setupGlobal(t)
 
 	want := []string{
+		"GET /healthz",
 		"GET /api/system/ai-models",
 		"POST /api/order/recognition",
 		"POST /api/order/recognition/stream",
@@ -50,6 +51,22 @@ func TestSetupRegistersAllEndpoints(t *testing.T) {
 		if !got[w] {
 			t.Errorf("缺少路由 %s", w)
 		}
+	}
+}
+
+func TestHealthzReturnsOK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	setupGlobal(t)
+	r := Setup()
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), `"status":"ok"`) {
+		t.Fatalf("body = %s", w.Body.String())
 	}
 }
 

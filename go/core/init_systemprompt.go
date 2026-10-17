@@ -9,7 +9,7 @@ import (
 )
 
 func Readsystemprompt() (str string) {
-	file, err := os.Open("systemPrompt.txt")
+	file, err := os.Open("./go/config/systemPrompt.txt")
 	if err != nil {
 		logrus.Errorf("读取 systemPrompt 文件失败: %v", err)
 		return

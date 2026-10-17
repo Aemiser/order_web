@@ -46,10 +46,14 @@ func (p *ProductSpecsJSON) Scan(value interface{}) error {
 // AddressInfo 地址信息结构体
 type AddressInfo struct {
 	Model
-	PreviewID    uint             `gorm:"-" json:"VID"`
-	Recipient    string           `gorm:"recipient" json:"收件人"`
-	Phone        string           `gorm:"phone" json:"手机号"`
-	Address      string           `gorm:"address" json:"收货地址"`
+	PreviewID uint   `gorm:"-" json:"VID"`
+	Recipient string `gorm:"recipient" json:"收件人"`
+	Phone     string `gorm:"phone" json:"手机号"`
+	Address   string `gorm:"address" json:"收货地址"`
+	// Province 省级行政区全称（34 行政区枚举，未识别为空串）。
+	// 显式 column: 前缀（B3.2.1）；必须显式 size:32——无 size 的 string 列 GORM 生成
+	// longtext，无法建二级索引（契约 §1.2）；idx_province 服务省份统计 GROUP BY 与回填预检。
+	Province     string           `gorm:"column:province;size:32;index:idx_province" json:"省份"`
 	ProductSpecs ProductSpecsJSON `gorm:"productSpecs;type:json" json:"商品规格"`
 	Remarks      string           `gorm:"remarks" json:"备注"`
 	Isstorage    bool             `gorm:"-" json:"Isstorage"`

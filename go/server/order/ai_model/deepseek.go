@@ -15,11 +15,12 @@ import (
 
 // DeepSeekRequest API请求结构
 type DeepSeekRequest struct {
-	Model       string    `json:"model"`
-	Messages    []Message `json:"messages"`
-	Temperature float64   `json:"temperature"`
-	MaxTokens   int       `json:"max_tokens"`
-	Stream      bool      `json:"stream"`
+	Model           string            `json:"model"`
+	Messages        []Message         `json:"messages"`
+	Temperature     float64           `json:"temperature"`
+	MaxTokens       int               `json:"max_tokens"`
+	Stream          bool              `json:"stream"`
+	Response_format map[string]string `json:"response_format"`
 }
 
 // DeepSeekResponse API响应结构
@@ -53,8 +54,6 @@ func OrderRecDeepseek(inputText string, previewType enum.RecPreviewType) []order
 		alog.Logaction(enum.LogWarnLevel, "DeepSeek API识别识别失败", err.Error())
 		return nil
 	}
-	// vid赋值
-	addressList = ordertutil.SetVid(addressList)
 
 	// JSON格式
 	jsonData, _ := json.MarshalIndent(addressList, "", "  ")
@@ -64,7 +63,21 @@ func OrderRecDeepseek(inputText string, previewType enum.RecPreviewType) []order
 	logcontent := "原始输入:" + "\n" + inputText + "\n" + "识别结果:" + "\n" + string(jsonData)
 	alog.Logaction(enum.LogInfoLevel, "DeepSeek API识别", logcontent)
 
-	// 预览数据模式判断
+	// 预览数据模式判断（先完成 VID 赋值再写入 global，见 mergeIntoPreview 注释）
+	mergeIntoPreview(addressList, previewType)
+
+	// 转换成预览数据返回给前台
+	return ordertutil.AddressToExcelAddress(global.AddressList)
+}
+
+// mergeIntoPreview 将识别结果按预览模式写入 global.AddressList（缺陷修复 2026-10-17）：
+// VID 赋值（SetVid）必须在 append / 整体赋值之前完成——Go 切片 append/赋值产生元素值拷贝，
+// 旧写法「先写入 global 再对局部切片 SetVid」只改到临时副本，global 中新增行 PreviewID 恒为 0，
+// 追加识别后编辑/删除/审核修正按 VID 定位错行。与 qwen.go 非流式分支行为保持一致。
+func mergeIntoPreview(addressList []models.AddressInfo, previewType enum.RecPreviewType) {
+	// vid赋值（先构造完成元素，再写入 global）
+	addressList = ordertutil.SetVid(addressList)
+
 	// 追加
 	if previewType == enum.RecPreviewType_ADD {
 		global.AddressList = append(global.AddressList, addressList...)
@@ -74,9 +87,6 @@ func OrderRecDeepseek(inputText string, previewType enum.RecPreviewType) []order
 	if previewType == enum.RecPreviewType_RE {
 		global.AddressList = addressList
 	}
-
-	// 转换成预览数据返回给前台
-	return ordertutil.AddressToExcelAddress(global.AddressList)
 }
 
 // RecognizeAddresses 调用DeepSeek API识别多条地址
