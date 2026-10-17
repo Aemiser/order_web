@@ -29,7 +29,7 @@ func TestExtractProvinceShortNames(t *testing.T) {
 // 含「北京市密云区…」同类场景（去掉「市」字后无省份全称）。
 func TestExtractProvinceShortPrefixNoFullName(t *testing.T) {
 	cases := []struct{ name, addr, want string }{
-		{"北京密云区开头无省份全称", "北京东城区示例街3号-某茶馆", "北京市"},
+		{"北京密云区开头无省份全称", "北京密云区示例镇示例景区-某茶馆", "北京市"},
 		{"内蒙古开头", "内蒙古呼和浩特市赛罕区大学东街88号", "内蒙古自治区"},
 		{"新疆开头", "新疆乌鲁木齐市天山区人民路100号", "新疆维吾尔自治区"},
 		{"香港开头", "香港中环皇后大道中1号", "香港特别行政区"},
