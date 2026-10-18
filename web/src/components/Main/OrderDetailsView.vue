@@ -483,9 +483,9 @@ const resetQuery = async () => {
 </script>
 
 <template>
-  <div class="max-w-15xl mx-auto space-y-6">
+  <div class="space-y-6">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <h2 class="text-3xl font-bold font-display">订单详情管理</h2>
+      <h2 class="text-3xl font-bold font-display text-[var(--text-primary)]">订单详情管理</h2>
 
     </div>
 
@@ -923,7 +923,7 @@ input[type="date"].border-red-400 {
   color: var(--text-secondary) !important;
 }
 .order-action-msgbox .el-message-box__message {
-  color: #cbd5e1 !important;
+  color: var(--text-secondary) !important;
 }
 .order-action-msgbox .el-message-box__btns .el-button {
   background-color: var(--bg-hover) !important;
@@ -938,6 +938,6 @@ input[type="date"].border-red-400 {
 .order-action-msgbox .el-message-box__btns .el-button--primary {
   background-color: var(--accent) !important;
   border-color: var(--accent) !important;
-  color: #ffffff !important;
+  color: var(--text-on-accent) !important;
 }
 </style>

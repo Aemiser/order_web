@@ -9,10 +9,50 @@
    ------------------------------------------------------------
    组件中不写死颜色，统一引用以下语义变量（如 bg-[var(--bg-app)]、
    text-[var(--text-primary)]）。主题切换只改根元素的 data-theme
-   属性，变量值随之整体替换。默认主题 = 深色（原设计）。
+   属性，变量值随之整体替换。默认主题 = Editorial 编辑杂志风。
    ============================================================ */
 
+/* ---------- 默认主题：Editorial 编辑杂志风 ----------
+   米白纸感、衬线标题、克制深蓝强调、细线边框、低饱和。 */
 :root,
+:root[data-theme="editorial"] {
+  /* 背景层级 */
+  --bg-app: #f4f1ea;
+  --bg-sidebar: #ebe6db;
+  --bg-card: #fbf9f4;
+  --bg-input: rgba(30, 41, 59, 0.04);
+  --bg-hover: rgba(30, 41, 59, 0.06);
+  --bg-hover-strong: rgba(30, 41, 59, 0.1);
+  --bg-hover-faint: rgba(30, 41, 59, 0.02);
+  /* 文字层级 */
+  --text-primary: #1f2428;
+  --text-secondary: #3d444b;
+  --text-muted: #6b7280;
+  --text-faint: #9ca3af;
+  /* 强调色（深蓝） */
+  --text-on-accent: #ffffff;
+  --accent: #1f4e79;
+  --accent-hover: #2c6699;
+  --accent-soft: #3d7bb0;
+  --accent-soft-bg: rgba(31, 78, 121, 0.08);
+  --accent-soft-bg-strong: rgba(31, 78, 121, 0.16);
+  --accent-muted: rgba(31, 78, 121, 0.5);
+  --accent-glow: rgba(31, 78, 121, 0.25);
+  --accent-border: rgba(31, 78, 121, 0.18);
+  /* 辅助色 */
+  --teal: #2f6f5f;
+  --teal-soft: rgba(47, 111, 95, 0.1);
+  /* 边框 */
+  --border: rgba(30, 41, 59, 0.12);
+  --border-strong: rgba(30, 41, 59, 0.2);
+  /* 遮罩 */
+  --overlay: rgba(31, 36, 40, 0.6);
+  /* 圆角 / 阴影 */
+  --radius-card: 0.5rem;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- 主题切换：深色经典 ---------- */
 :root[data-theme="dark"] {
   /* 背景层级 */
   --bg-app: #0f1115;
@@ -48,37 +88,6 @@
   /* 圆角 / 阴影 */
   --radius-card: 1rem;
   --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-}
-
-/* ---------- 主题一：Editorial 编辑杂志风 ----------
-   米白纸感、衬线标题、克制深蓝强调、细线边框、低饱和。 */
-:root[data-theme="editorial"] {
-  --bg-app: #f4f1ea;
-  --bg-sidebar: #ebe6db;
-  --bg-card: #fbf9f4;
-  --bg-input: rgba(30, 41, 59, 0.04);
-  --bg-hover: rgba(30, 41, 59, 0.06);
-  --bg-hover-strong: rgba(30, 41, 59, 0.1);
-  --bg-hover-faint: rgba(30, 41, 59, 0.02);
-  --text-primary: #1f2428;
-  --text-secondary: #3d444b;
-  --text-muted: #6b7280;
-  --text-faint: #9ca3af;
-  --accent: #1f4e79;
-  --accent-hover: #2c6699;
-  --accent-soft: #3d7bb0;
-  --accent-soft-bg: rgba(31, 78, 121, 0.08);
-  --accent-soft-bg-strong: rgba(31, 78, 121, 0.16);
-  --accent-muted: rgba(31, 78, 121, 0.5);
-  --accent-glow: rgba(31, 78, 121, 0.25);
-  --accent-border: rgba(31, 78, 121, 0.18);
-  --teal: #2f6f5f;
-  --teal-soft: rgba(47, 111, 95, 0.1);
-  --border: rgba(30, 41, 59, 0.12);
-  --border-strong: rgba(30, 41, 59, 0.2);
-  --overlay: rgba(31, 36, 40, 0.6);
-  --radius-card: 0.5rem;
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 /* ---------- 主题二：Hand-Drawn Doodle 手绘涂鸦风 ----------
@@ -187,7 +196,8 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Editorial 主题用衬线字体；其余保持系统无衬线 */
+  /* Editorial 是默认主题，用衬线字体；其余主题保持系统无衬线 */
+  :root,
   :root[data-theme="editorial"] {
     font-family: "Georgia", "Songti SC", "SimSun", serif;
   }

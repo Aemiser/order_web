@@ -34,11 +34,11 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <header class="h-16 border-b border-[var(--border)] flex items-center justify-between px-8 bg-[var(--bg-app)]">
-    <div class="flex items-center gap-4 text-sm text-[var(--text-muted)]">
-      <span class="hover:text-[var(--text-primary)] transition-colors cursor-pointer">工作区</span>
-      <ChevronRight class="w-4 h-4" />
-      <span class="text-[var(--text-primary)]">订单智能识别</span>
+  <header class="h-16 border-b border-[var(--border)] flex items-center justify-between px-5 lg:px-8 bg-[var(--bg-app)] backdrop-blur-sm bg-opacity-80">
+    <div class="flex items-center gap-3 text-sm text-[var(--text-muted)] min-w-0">
+      <span class="hidden sm:inline hover:text-[var(--text-primary)] transition-colors cursor-pointer whitespace-nowrap">工作区</span>
+      <ChevronRight class="w-4 h-4 hidden sm:inline shrink-0" />
+      <span class="text-[var(--text-primary)] font-medium truncate">订单智能识别</span>
     </div>
     <div class="flex items-center gap-6">
       <!-- 主题切换 -->

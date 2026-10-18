@@ -59,7 +59,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="max-w-15xl mx-auto space-y-8">
+  <div class="space-y-6">
     <div :class="['transition-all duration-500 ease-in-out', isCollapsed ? 'max-h-40 overflow-hidden' : 'max-h-none']">
       <OrderInput 
         :inputText="inputText"

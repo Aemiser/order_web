@@ -72,15 +72,17 @@ onMounted(() => {
 <template>
   <section class="space-y-4">
     <div class="flex items-center justify-between">
-      <h2 class="text-2xl font-bold tracking-tight">新建订单解析</h2>
-      <span class="text-sm text-[var(--text-faint)]">支持直接粘贴文本或拖入文件</span>
+      <div class="flex items-baseline gap-3">
+        <h2 class="text-2xl font-bold tracking-tight text-[var(--text-primary)]">新建订单解析</h2>
+        <span class="text-sm text-[var(--text-muted)]">支持直接粘贴文本或拖入文件</span>
+      </div>
     </div>
     <div class="relative group">
       <textarea 
         :value="inputText"
         @input="$emit('update:inputText', ($event.target as HTMLTextAreaElement).value)"
         placeholder="请在此处输入或粘贴原始订单详情...&#10;示例：王小二 13800138000 上海市静安区XX路XX号 苹果x1 香蕉x2" 
-        class="w-full h-48 p-6 rounded-2xl bg-[var(--bg-hover)] border border-[var(--border-strong)] focus:border-[var(--accent)] focus:bg-white/[0.07] outline-none text-[var(--text-secondary)] placeholder:text-[var(--text-faint)] resize-none font-mono text-sm leading-relaxed transition-all"
+        class="w-full h-56 p-6 rounded-2xl bg-[var(--bg-hover)] border border-[var(--border-strong)] focus:border-[var(--accent)] focus:bg-[var(--bg-card)] outline-none text-[var(--text-secondary)] placeholder:text-[var(--text-faint)] resize-none font-mono text-sm leading-relaxed transition-all"
       ></textarea>
       <div class="absolute bottom-4 right-4 flex items-center gap-3">
         <!-- 模式选择复选框 -->

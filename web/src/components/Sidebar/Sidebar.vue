@@ -21,30 +21,31 @@ defineEmits<{
         </div>
         <h1 class="text-xl font-bold tracking-tight text-[var(--text-primary)]">OrderMaster</h1>
       </div>
-      <nav class="space-y-1">
+      <nav class="space-y-2 mt-2">
+        <p class="px-4 mb-2 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-faint)]">工作台</p>
         <button 
           @click="$emit('update:activeTab', 'input')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-left"
-          :class="activeTab === 'input' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
+          :class="activeTab === 'input' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)] shadow-sm shadow-[var(--accent-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
         >
-          <FileText class="w-5 h-5" />
-          <span class="font-medium">订单输入</span>
+          <FileText class="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+          <span class="font-medium truncate">订单输入</span>
         </button>
         <button 
           @click="$emit('update:activeTab', 'details')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left"
-          :class="activeTab === 'details' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
+          :class="activeTab === 'details' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)] shadow-sm shadow-[var(--accent-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
         >
-          <Layers class="w-5 h-5" />
-          <span class="font-medium">订单详情</span>
+          <Layers class="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+          <span class="font-medium truncate">订单详情</span>
         </button>
         <button 
           @click="$emit('update:activeTab', 'checkout')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left"
-          :class="activeTab === 'checkout' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
+          :class="activeTab === 'checkout' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)] shadow-sm shadow-[var(--accent-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
         >
-          <Calculator class="w-5 h-5" />
-          <span class="font-medium">账单结算</span>
+          <Calculator class="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+          <span class="font-medium truncate">账单结算</span>
         </button>
 <!--        <button -->
 <!--          @click="$emit('update:activeTab', 'settings')"-->

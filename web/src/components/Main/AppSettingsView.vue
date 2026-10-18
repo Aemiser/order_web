@@ -19,9 +19,9 @@ const saveSettings = () => {
 </script>
 
 <template>
-  <div class="max-w-15xl mx-auto space-y-10 pb-16">
+  <div class="space-y-10 pb-16">
     <div class="flex flex-col gap-2">
-      <h2 class="text-3xl font-bold tracking-tight font-display">应用设置</h2>
+      <h2 class="text-3xl font-bold tracking-tight font-display text-[var(--text-primary)]">应用设置</h2>
       <p class="text-[var(--text-muted)]">管理您的订单解析偏好、存储路径及系统配置</p>
     </div>
 

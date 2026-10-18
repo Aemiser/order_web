@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+  <div class="space-y-6">
     <!-- Query Area -->
     <CheckQuery 
       @query="handleQuery"

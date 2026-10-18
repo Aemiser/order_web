@@ -22,7 +22,7 @@ import type { Order } from './types';
 
 // --- 主题 ---
 const THEME_KEY = 'order_web_theme';
-const theme = ref<string>(localStorage.getItem(THEME_KEY) || 'dark');
+const theme = ref<string>(localStorage.getItem(THEME_KEY) || 'editorial');
 const applyTheme = (t: string) => {
   theme.value = t;
   document.documentElement.setAttribute('data-theme', t);
@@ -518,85 +518,90 @@ onBeforeUnmount(() => {
         @logout="handleLogout"
       />
 
-      <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        <!-- Conditional View Rendering -->
-        <OrderInputView
-          v-if="activeTab === 'input'"
-          v-model:inputText="inputText"
-          :isAnalyzing="isAnalyzing"
-          :orders="orders"
-          @clear="clearInput"
-          @analyze="analyzeOrders"
-          @removeOrder="removeOrder"
-          @clearAllOrders="orders = []"
-          @refreshData="refreshData"
-          @delete="deleteOrder"
-        />
+      <div class="flex-1 overflow-y-auto custom-scrollbar">
+        <div class="max-w-7xl mx-auto px-5 py-6 lg:px-8 lg:py-8">
+          <!-- Conditional View Rendering -->
+          <OrderInputView
+            v-if="activeTab === 'input'"
+            v-model:inputText="inputText"
+            :isAnalyzing="isAnalyzing"
+            :orders="orders"
+            @clear="clearInput"
+            @analyze="analyzeOrders"
+            @removeOrder="removeOrder"
+            @clearAllOrders="orders = []"
+            @refreshData="refreshData"
+            @delete="deleteOrder"
+          />
 
-        <OrderDetailsView
-          v-if="activeTab === 'details'"
-          :activeTab="activeTab"
-        />
+          <OrderDetailsView
+            v-if="activeTab === 'details'"
+            :activeTab="activeTab"
+          />
 
-        <CheckoutView
-          v-if="activeTab === 'checkout'"
-          :isEditMode="isEditMode"
-          :checkoutResponse="checkoutResponse"
-          @save-prices="handleSavePrices"
-          @save-unit="handleSaveUnit"
-          @enter-edit-mode="handleEnterEditMode"
-          @exit-edit-mode="handleExitEditMode"
-          @clear-prices="handleClearPrices"
-          @data-status="handleCheckoutDataStatus"
-          @date-range-change="handleDateRangeChange"
-          @update-field-data="handleUpdateFieldData"
-          @field-data-loading="handleFieldDataLoading"
-        />
+          <CheckoutView
+            v-if="activeTab === 'checkout'"
+            :isEditMode="isEditMode"
+            :checkoutResponse="checkoutResponse"
+            @save-prices="handleSavePrices"
+            @save-unit="handleSaveUnit"
+            @enter-edit-mode="handleEnterEditMode"
+            @exit-edit-mode="handleExitEditMode"
+            @clear-prices="handleClearPrices"
+            @data-status="handleCheckoutDataStatus"
+            @date-range-change="handleDateRangeChange"
+            @update-field-data="handleUpdateFieldData"
+            @field-data-loading="handleFieldDataLoading"
+          />
 
-        <AppSettingsView
-          v-if="activeTab === 'settings'"
-        />
+          <AppSettingsView
+            v-if="activeTab === 'settings'"
+          />
+        </div>
       </div>
 
       <!-- Bottom Action Bar (Only show for Input view) -->
       <footer 
         v-if="activeTab === 'input'"
-        class="h-20 bg-[var(--bg-sidebar)] border-t border-[var(--border)] px-8 flex items-center justify-between shrink-0"
+        class="h-20 bg-[var(--bg-sidebar)] border-t border-[var(--border)] px-5 lg:px-8 flex items-center justify-center shrink-0"
       >
-        <div class="flex items-center gap-4 text-sm text-[var(--text-muted)]">
-          <span class="flex items-center gap-2">
-            <Info class="w-4 h-4 text-[var(--accent)]" />
-            共计识别 {{ totalOrders }} 条订单，预计文件大小 {{ estimatedSize }} KB
-          </span>
-        </div>
-        <div class="flex items-center gap-4">
-          <button @click="createOrder" class="px-8 py-3 rounded-xl bg-[var(--bg-hover)] hover:bg-[var(--bg-hover-strong)] text-[var(--text-primary)] font-medium transition-all">
-            确认数据无误
-          </button>
-          <button 
-            @click="exportToExcel"
-            :disabled="orders.length === 0"
-            class="px-10 py-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-on-accent)] font-bold flex items-center gap-2 shadow-xl shadow-[var(--accent-glow)] transition-all"
-          >
-            导出 XLSX 表格 <Download class="w-4 h-4" />
-          </button>
+        <div class="w-full max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4 text-sm text-[var(--text-muted)]">
+            <span class="flex items-center gap-2">
+              <Info class="w-4 h-4 text-[var(--accent)]" />
+              共计识别 {{ totalOrders }} 条订单，预计文件大小 {{ estimatedSize }} KB
+            </span>
+          </div>
+          <div class="flex items-center gap-4">
+            <button @click="createOrder" class="px-8 py-3 rounded-xl bg-[var(--bg-hover)] hover:bg-[var(--bg-hover-strong)] text-[var(--text-primary)] font-medium transition-all">
+              确认数据无误
+            </button>
+            <button 
+              @click="exportToExcel"
+              :disabled="orders.length === 0"
+              class="px-10 py-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-on-accent)] font-bold flex items-center gap-2 shadow-xl shadow-[var(--accent-glow)] transition-all"
+            >
+              导出 XLSX 表格 <Download class="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </footer>
 
       <!-- Bottom Action Bar (Only show for Checkout view) -->
       <footer 
         v-if="activeTab === 'checkout'"
-        class="h-20 bg-[var(--bg-sidebar)] border-t border-[var(--border)] px-8 flex items-center justify-between shrink-0"
+        class="h-20 bg-[var(--bg-sidebar)] border-t border-[var(--border)] px-5 lg:px-8 flex items-center justify-center shrink-0"
       >
-        <div class="flex items-center gap-4 text-xs text-[var(--text-faint)]">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-[var(--accent)]"></span>
-            <span>已选定 {{ selectedDays }} 天数据</span>
-          </div>
+        <div class="w-full max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4 text-xs text-[var(--text-faint)]">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[var(--accent)]"></span>
+              <span>已选定 {{ selectedDays }} 天数据</span>
+            </div>
 <!--          <div class="w-px h-4 bg-[var(--bg-hover-strong)]"></div>-->
 <!--          <p>总成交品种: <span class="text-[var(--text-primary)] font-bold">14项</span></p>-->
-        </div>
-        <div class="flex items-center gap-3">
+          </div>
+          <div class="flex items-center gap-3">
           <!-- 编辑模式下的按钮 -->
           <template v-if="isEditMode">
             <button 
@@ -659,6 +664,7 @@ onBeforeUnmount(() => {
               <span class="text-xs font-bold">财务结算</span>
             </button>
           </template>
+        </div>
         </div>
       </footer>
 
