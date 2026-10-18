@@ -15,6 +15,7 @@ func FlagDB() {
 		models.AddressInfo{},
 		models.LogModels{},
 		models.PriceConfig{}, // 2026-10-17 新增：价格配置表（契约 §1.3）
+		models.User{},        // 2026-10-18 新增：登录账号表
 	)
 	if err != nil {
 		// B2 不吞错：迁移失败必须中止，不再假成功（原实现失败后仍打印「迁移成功」）

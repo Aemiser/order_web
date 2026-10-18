@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300">
     <!-- Modal Container -->
-    <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-5xl w-full h-[80vh] mx-4 transform transition-all duration-300 scale-100 flex flex-col overflow-hidden">
+    <div class="bg-[var(--bg-sidebar)] border border-[var(--border-strong)] rounded-2xl p-8 max-w-5xl w-full h-[80vh] mx-4 transform transition-all duration-300 scale-100 flex flex-col overflow-hidden">
       <!-- Modal Body -->
       <div class="flex-1 flex overflow-hidden p-4 gap-4">
         <!-- Left Panel: Drag Source & L1 Creator -->
@@ -9,20 +9,20 @@
           <!-- + 添加一级元素 Drop Zone (TOP) -->
           <div 
             id="l1-drop-zone" 
-            class="h-[46px] rounded-xl border-2 border-dashed border-blue-500/20 bg-blue-500/5 flex items-center justify-center gap-2 group hover:border-blue-500/50 hover:bg-blue-500/10 transition-all cursor-pointer shadow-inner"
+            class="h-[46px] rounded-xl border-2 border-dashed border-[var(--accent-border)] bg-[var(--accent-soft-bg)] flex items-center justify-center gap-2 group hover:border-[var(--accent-border)] hover:bg-[var(--accent-soft-bg-strong)] transition-all cursor-pointer shadow-inner"
             @dragover.prevent="handleDragOver($event, 'l1')"
             @dragleave="handleDragLeave($event, 'l1')"
             @drop="handleDrop($event, 'l1')"
           >
-            <Icon icon="lucide:plus" class="text-blue-500 text-base group-hover:scale-110 transition-transform"></Icon>
-            <p class="text-[11px] font-bold text-blue-400">添加一级元素</p>
+            <Icon icon="lucide:plus" class="text-[var(--accent)] text-base group-hover:scale-110 transition-transform"></Icon>
+            <p class="text-[11px] font-bold text-[var(--accent-soft)]">添加一级元素</p>
           </div>
           
           <!-- Draggable Field List -->
           <div class="flex flex-col flex-1 gap-2 overflow-hidden">
             <div class="flex items-center justify-between px-1">
               <div class="flex items-center gap-2">
-                <h3 class="text-[11px] font-display font-bold text-slate-500 uppercase tracking-widest">未分类字段</h3>
+                <h3 class="text-[11px] font-display font-bold text-[var(--text-muted)] uppercase tracking-widest">未分类字段</h3>
               </div>
             </div>
             <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
@@ -30,33 +30,33 @@
                 v-for="(field, index) in localFieldList" 
                 :key="index"
                 draggable="true"
-                class="drag-item p-2.5 rounded-xl glass-card border border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-white/5 transition-all cursor-grab"
+                class="drag-item p-2.5 rounded-xl glass-card border border-[var(--border)] flex items-center justify-between group hover:border-[var(--accent-border)] hover:bg-[var(--bg-hover)] transition-all cursor-grab"
                 @dragstart="handleDragStart($event, field)"
                 @dragend="handleDragEnd"
               >
                 <div class="flex items-center gap-2.5">
-                  <Icon icon="lucide:file-text" class="text-slate-500 group-hover:text-blue-500 transition-colors text-sm"></Icon>
-                  <span class="text-[13px] font-medium text-slate-300">{{ field }}</span>
+                  <Icon icon="lucide:file-text" class="text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors text-sm"></Icon>
+                  <span class="text-[13px] font-medium text-[var(--text-secondary)]">{{ field }}</span>
                 </div>
-                <Icon icon="lucide:grip-vertical" class="text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity text-xs"></Icon>
+                <Icon icon="lucide:grip-vertical" class="text-[var(--text-faint)] opacity-0 group-hover:opacity-100 transition-opacity text-xs"></Icon>
               </div>
             </div>
           </div>
         </aside>
         
         <!-- Right Panel: Configuration Area -->
-        <section class="flex-1 bg-[#0F1115] rounded-2xl border border-white/5 overflow-hidden flex flex-col shadow-inner">
+        <section class="flex-1 bg-[var(--bg-app)] rounded-2xl border border-[var(--border)] overflow-hidden flex flex-col shadow-inner">
           <div class="flex-1 flex overflow-x-auto custom-scrollbar">
             <!-- Dynamic Categories -->
             <div 
               v-for="(subFields, category) in localPbMap" 
               :key="category"
-              class="w-8 min-w-[12rem] border-r border-white/5 flex flex-col bg-white/[0.01]"
+              class="w-8 min-w-[12rem] border-r border-[var(--border)] flex flex-col bg-[var(--bg-hover-faint)]"
             >
-              <div class="p-3.5 flex items-center justify-between bg-[#1E2228] border-b border-white/10">
+              <div class="p-3.5 flex items-center justify-between bg-[var(--bg-card)] border-b border-[var(--border-strong)]">
                 <div class="flex items-center gap-2">
-                  <span class="w-1 h-4 bg-blue-600 rounded-full"></span>
-                  <h4 class="font-display font-bold text-[13px] text-blue-100">{{ category }}</h4>
+                  <span class="w-1 h-4 bg-[var(--accent)] rounded-full"></span>
+                  <h4 class="font-display font-bold text-[13px] text-[var(--accent-soft)]">{{ category }}</h4>
                 </div>
                 <button class="text-red-500 hover:text-red-400 transition-all duration-200 p-2 rounded-full bg-red-400/10 hover:bg-red-400/20" @click="removeCategory(category)">
                   <Icon icon="lucide:trash-2" class="text-sm transition-transform duration-200 hover:scale-110"></Icon>
@@ -65,7 +65,7 @@
               <div class="p-3 flex-1 space-y-2.5">
                 <!-- Level-2 Drop Zone -->
                 <div 
-                  class="l2-drop-zone h-10 rounded-lg border border-dashed border-white/10 flex items-center justify-center gap-2 text-slate-600 hover:text-slate-400 hover:border-white/20 transition-all"
+                  class="l2-drop-zone h-10 rounded-lg border border-dashed border-[var(--border-strong)] flex items-center justify-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--accent-border)] transition-all"
                   @dragover.prevent="handleDragOver($event, 'l2', category)"
                   @dragleave="handleDragLeave($event, 'l2')"
                   @drop="handleDrop($event, 'l2', category)"
@@ -78,43 +78,43 @@
                   v-for="(subField, index) in subFields" 
                   :key="index"
                   draggable="true"
-                  class="p-2.5 rounded-xl bg-[#1E2228] border border-white/5 flex items-center justify-between group hover:border-blue-500/30 hover:bg-white/5 transition-all cursor-grab"
+                  class="p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-between group hover:border-[var(--accent-border)] hover:bg-[var(--bg-hover)] transition-all cursor-grab"
                   @dragstart="handleDragStart($event, subField)"
                   @dragend="handleDragEnd"
                 >
-                  <span class="text-[12px] text-slate-300">{{ subField }}</span>
-                  <Icon icon="lucide:grip-horizontal" class="text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity text-xs"></Icon>
+                  <span class="text-[12px] text-[var(--text-secondary)]">{{ subField }}</span>
+                  <Icon icon="lucide:grip-horizontal" class="text-[var(--text-faint)] opacity-0 group-hover:opacity-100 transition-opacity text-xs"></Icon>
                 </div>
               </div>
             </div>
             
             <!-- Empty Drop Zone Placeholder -->
             <div class="w-8 min-w-[12rem] flex flex-col items-center justify-center opacity-30 p-6 text-center">
-              <div class="w-10 h-10 rounded-xl border border-dashed border-white/10 flex items-center justify-center mb-3">
-                <Icon icon="lucide:layout-template" class="text-lg text-slate-600"></Icon>
+              <div class="w-10 h-10 rounded-xl border border-dashed border-[var(--border-strong)] flex items-center justify-center mb-3">
+                <Icon icon="lucide:layout-template" class="text-lg text-[var(--text-muted)]"></Icon>
               </div>
-              <p class="text-[10px] font-medium text-slate-500 uppercase">可添加列</p>
+              <p class="text-[10px] font-medium text-[var(--text-muted)] uppercase">可添加列</p>
             </div>
           </div>
         </section>
       </div>
       
       <!-- Modal Footer -->
-      <div class="px-6 py-4 border-t border-white/5 flex items-center justify-between bg-white/[0.01]">
-        <div class="flex items-center gap-2 text-[10px] text-slate-500 italic">
-          <Icon icon="lucide:info" class="text-blue-500 text-xs"></Icon>
+      <div class="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between bg-[var(--bg-hover-faint)]">
+        <div class="flex items-center gap-2 text-[10px] text-[var(--text-muted)] italic">
+          <Icon icon="lucide:info" class="text-[var(--accent)] text-xs"></Icon>
           <span>拖动字段从左上角创建主分类，到右侧列添加子栏目。</span>
         </div>
         <div class="flex gap-4">
           <button 
-            class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all"
+            class="px-6 py-2 rounded-lg bg-[var(--bg-hover-faint)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium transition-all"
             id="modal-reset-btn"
             @click="handleReset"
           >
             取消
           </button>
           <button
-            class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-6 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--text-on-accent)] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             id="modal-save-btn"
             @click="handleSave"
           >
@@ -278,15 +278,6 @@ const handleSave = () => {
 <style scoped>
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,500,400&f[]=cabinet-grotesk@800&display=swap');
 
-:root {
-  --bg-deep: #0F1115;
-  --bg-sidebar: #16191E;
-  --bg-card: #1E2228;
-  --accent-blue: #3B82F6;
-  --accent-teal: #14B8A6;
-  --text-muted: #94A3B8;
-}
-
 .font-display {
   font-family: 'Cabinet Grotesk', sans-serif;
 }
@@ -301,20 +292,20 @@ const handleSave = () => {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--border-strong);
   border-radius: 10px;
 }
 
 .glass-input {
-  background-color: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.08);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
   transition: all 0.2s ease;
 }
 
 .glass-card {
-  background: rgba(22,25,30,0.4);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
 }
 
 .drag-item:active {
@@ -324,8 +315,8 @@ const handleSave = () => {
 }
 
 .drop-zone-active {
-  border-color: var(--accent-blue);
-  background-color: rgba(59,130,246,0.05);
+  border-color: var(--accent);
+  background-color: var(--accent-soft-bg-strong);
 }
 
 @keyframes pulse-subtle {

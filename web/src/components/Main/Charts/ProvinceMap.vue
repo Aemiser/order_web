@@ -102,9 +102,9 @@ const renderChart = (list: ProvinceStat[] | null) => {
         map: 'china',
         roam: true,
         data,
-        label: { show: true, fontSize: 9, color: '#94a3b8' },
-        itemStyle: { areaColor: '#1b2230', borderColor: '#334155' },
-        emphasis: { label: { show: true }, itemStyle: { areaColor: '#3B82F6' } },
+        label: { show: true, fontSize: 9, color: 'var(--text-muted)' },
+        itemStyle: { areaColor: 'var(--bg-card)', borderColor: 'var(--border-strong)' },
+        emphasis: { label: { show: true }, itemStyle: { areaColor: 'var(--accent)' } },
       },
     ],
   });

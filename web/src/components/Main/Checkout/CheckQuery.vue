@@ -1,9 +1,9 @@
 <template>
-  <div class="bg-[#1E2228] border border-white/5 rounded-[2rem] p-6 mb-6">
+  <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-[2rem] p-6 mb-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
       <!-- 日期范围选择 -->
       <div class="space-y-2 col-span-1 md:col-span-2">
-        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2">
+        <label class="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-[0.1em] flex items-center gap-2">
           日期范围
         </label>
 
@@ -27,7 +27,7 @@
       <div class="flex items-end space-x-3">
         <button 
           @click="handleQuery" 
-          class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2 active:scale-95 text-sm"
+          class="px-6 py-2.5 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--text-on-accent)] font-bold shadow-lg shadow-[var(--accent-glow)] transition-all flex items-center justify-center gap-2 active:scale-95 text-sm"
         >
           <Search class="w-4 h-4" />
           <span>立即查询</span>
@@ -192,20 +192,20 @@ const handleQuery = async () => {
 
 <style scoped>
 .glass-input {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-strong);
   transition: all 0.2s ease;
   color: white;
 }
 
 .glass-input:focus {
   outline: none;
-  border-color: #3B82F6;
-  background-color: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent);
+  background-color: var(--bg-hover);
 }
 
 .glass-input::placeholder {
-  color: #94A3B8;
+  color: var(--text-muted);
 }
 
 select.glass-input {
@@ -256,99 +256,99 @@ input[type="date"].border-red-400 {
 }
 
 :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-strong);
   border-radius: 0.75rem;
   transition: all 0.2s ease;
   box-sizing: border-box !important;
 }
 
 :deep(.el-input__wrapper:hover) {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-strong);
 }
 
 :deep(.el-input__wrapper.is-focus) {
-  border-color: #3B82F6;
-  background-color: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 0 1px #3B82F6 inset;
+  border-color: var(--accent);
+  background-color: var(--bg-hover);
+  box-shadow: 0 0 0 1px var(--accent) inset;
 }
 
 :deep(.el-input__inner) {
-  color: #e2e8f0;
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
 :deep(.el-input__placeholder) {
-  color: #94A3B8;
+  color: var(--text-muted);
 }
 
 :deep(.el-range-separator) {
-  color: #94A3B8;
+  color: var(--text-muted);
 }
 
 /* 日期选择器弹出层样式 */
 .date-picker-popper {
-  background-color: #1E2228 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-strong) !important;
   border-radius: 0.75rem !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
 }
 
 :deep(.el-date-picker__header) {
-  background-color: #1E2228 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-strong) !important;
 }
 
 :deep(.el-date-picker__header-label) {
-  color: #e2e8f0 !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.el-date-picker__prev-btn:hover, .el-date-picker__next-btn:hover) {
-  color: #3B82F6 !important;
+  color: var(--accent) !important;
 }
 
 :deep(.el-date-table th) {
-  color: #94A3B8 !important;
+  color: var(--text-muted) !important;
 }
 
 :deep(.el-date-table td) {
-  color: #e2e8f0 !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.el-date-table td:hover) {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: var(--bg-hover) !important;
 }
 
 :deep(.el-date-table td.is-selected) {
-  background-color: #3B82F6 !important;
+  background-color: var(--accent) !important;
 }
 
 :deep(.el-date-table td.is-today) {
-  color: #3B82F6 !important;
+  color: var(--accent) !important;
 }
 
 :deep(.el-date-table td.is-disabled) {
-  color: #475569 !important;
+  color: var(--text-faint) !important;
 }
 
 :deep(.el-picker-panel__footer) {
-  background-color: #1E2228 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border-top: 1px solid var(--border-strong) !important;
 }
 
 :deep(.el-button--primary) {
-  background-color: #3B82F6 !important;
-  border-color: #3B82F6 !important;
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
 }
 
 :deep(.el-button--default) {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  color: #e2e8f0 !important;
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.el-button--default:hover) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: var(--bg-hover-strong) !important;
+  border-color: var(--border-strong) !important;
 }
 </style>

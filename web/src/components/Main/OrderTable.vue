@@ -220,7 +220,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <h2 class="text-xl font-bold">数据预览</h2>
-        <span class="px-2 py-0.5 rounded bg-teal-500/10 text-teal-500 text-[10px] font-bold uppercase tracking-wider">待导出</span>
+        <span class="px-2 py-0.5 rounded bg-[var(--teal-soft)] text-[var(--teal)] text-[10px] font-bold uppercase tracking-wider">待导出</span>
       </div>
 
       <!-- 审核按钮（T22）：预览态为空时禁用；请求中 loading -->
@@ -229,8 +229,8 @@ const applyCorrection = (item: orderApi.AuditItem) => {
         :disabled="orders.length === 0 || auditLoading"
         class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
         :class="orders.length === 0 || auditLoading
-          ? 'bg-white/5 text-slate-500 cursor-not-allowed'
-          : 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20'"
+          ? 'bg-[var(--bg-hover)] text-[var(--text-faint)] cursor-not-allowed'
+          : 'bg-[var(--teal-soft)] text-[var(--teal)] hover:bg-[var(--teal-soft)]'"
         :title="orders.length === 0 ? '暂无预览数据，无法审核' : '对比原始文本与预览数据，AI 复核可疑差异项'"
       >
         <ScanSearch class="w-4 h-4" :class="{ 'animate-pulse': auditLoading }" />
@@ -260,10 +260,10 @@ const applyCorrection = (item: orderApi.AuditItem) => {
       </div>
     </div>
     
-    <div class="rounded-2xl border border-white/5 bg-[#16191E] overflow-hidden">
+    <div class="rounded-2xl border border-[var(--border)] bg-[var(--bg-sidebar)] overflow-hidden">
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm border-collapse">
-          <thead class="bg-white/5 text-slate-400 font-medium">
+          <thead class="bg-[var(--bg-hover)] text-[var(--text-muted)] font-medium">
             <tr>
               <th class="px-6 py-4">编号</th>
               <th class="px-6 py-4">收件人</th>
@@ -275,10 +275,10 @@ const applyCorrection = (item: orderApi.AuditItem) => {
               <th class="px-6 py-4 w-32">操作</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-white/5">
-            <tr v-for="(order, index) in paginatedOrders" :key="order.id" :class="[index % 2 === 1 ? 'bg-white/[0.01]' : '', isEditing(order.id) ? 'bg-blue-500/10' : '']">
+          <tbody class="divide-y divide-[var(--border)]">
+            <tr v-for="(order, index) in paginatedOrders" :key="order.id" :class="[index % 2 === 1 ? 'bg-[var(--bg-hover-faint)]' : '', isEditing(order.id) ? 'bg-[var(--accent-soft-bg)]' : '']">
               <!-- 编号 -->
-              <td class="px-6 py-4 font-mono text-slate-500">{{ order.id }}</td>
+              <td class="px-6 py-4 font-mono text-[var(--text-faint)]">{{ order.id }}</td>
               
               <!-- 客户姓名 -->
               <td class="px-6 py-4">
@@ -286,7 +286,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
                   <input 
                     v-model="editedOrder.name" 
                     type="text" 
-                    class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                    class="w-full bg-[var(--bg-hover)] border border-[var(--border-strong)] rounded px-3 py-2 text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                     placeholder="收件人"
                   />
                   <span v-if="validationErrors.name" class="text-red-400 text-xs mt-1 block">{{ validationErrors.name }}</span>
@@ -302,13 +302,13 @@ const applyCorrection = (item: orderApi.AuditItem) => {
                   <input 
                     v-model="editedOrder.phone" 
                     type="text" 
-                    class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                    class="w-full bg-[var(--bg-hover)] border border-[var(--border-strong)] rounded px-3 py-2 text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors font-mono"
                     placeholder="电话"
                   />
                   <span v-if="validationErrors.phone" class="text-red-400 text-xs mt-1 block">{{ validationErrors.phone }}</span>
                 </template>
                 <template v-else>
-                  <span class="font-mono text-slate-300">{{ order.phone }}</span>
+                  <span class="font-mono text-[var(--text-secondary)]">{{ order.phone }}</span>
                 </template>
               </td>
               
@@ -318,19 +318,19 @@ const applyCorrection = (item: orderApi.AuditItem) => {
                   <input 
                     v-model="editedOrder.address" 
                     type="text" 
-                    class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                    class="w-full bg-[var(--bg-hover)] border border-[var(--border-strong)] rounded px-3 py-2 text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                     placeholder="地址"
                   />
                   <span v-if="validationErrors.address" class="text-red-400 text-xs mt-1 block">{{ validationErrors.address }}</span>
                 </template>
                 <template v-else>
-                  <span class="text-slate-300 max-w-xs truncate">{{ order.address }}</span>
+                  <span class="text-[var(--text-secondary)] max-w-xs truncate">{{ order.address }}</span>
                 </template>
               </td>
 
               <!-- 省份（后端从收货地址提取派生，行内编辑不提供修改） -->
               <td class="px-6 py-4">
-                <span class="text-slate-300">{{ order.province || '-' }}</span>
+                <span class="text-[var(--text-secondary)]">{{ order.province || '-' }}</span>
               </td>
 
               <!-- 商品项 -->
@@ -339,7 +339,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
                   <input 
                     v-model="editedOrder.items" 
                     type="text" 
-                    class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                    class="w-full bg-[var(--bg-hover)] border border-[var(--border-strong)] rounded px-3 py-2 text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                     placeholder="规格"
                   />
                   <span v-if="validationErrors.items" class="text-red-400 text-xs mt-1 block">{{ validationErrors.items }}</span>
@@ -355,12 +355,12 @@ const applyCorrection = (item: orderApi.AuditItem) => {
                   <input 
                     v-model="editedOrder.note" 
                     type="text" 
-                    class="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
+                    class="w-full bg-[var(--bg-hover)] border border-[var(--border-strong)] rounded px-3 py-2 text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                     placeholder="备注"
                   />
                 </template>
                 <template v-else>
-                  <span class="text-slate-500">{{ order.note || '-' }}</span>
+                  <span class="text-[var(--text-faint)]">{{ order.note || '-' }}</span>
                 </template>
               </td>
               
@@ -377,7 +377,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
                     </button>
                     <button 
                       @click="cancelEdit"
-                      class="p-1.5 rounded bg-white/5 text-slate-400 hover:text-white transition-colors"
+                      class="p-1.5 rounded bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                       title="取消"
                     >
                       <X class="w-4 h-4" />
@@ -388,14 +388,14 @@ const applyCorrection = (item: orderApi.AuditItem) => {
                   <div class="flex gap-2">
                     <button 
                       @click="startEditing(order)"
-                      class="p-1.5 rounded bg-white/5 text-slate-400 hover:text-blue-400 transition-colors"
+                      class="p-1.5 rounded bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--accent-soft)] transition-colors"
                       title="编辑"
                     >
                       <Edit3 class="w-4 h-4" />
                     </button>
                     <button 
                       @click="$emit('delete', order.id)"
-                      class="p-1.5 rounded bg-white/5 text-slate-400 hover:text-red-400 transition-colors"
+                      class="p-1.5 rounded bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-red-400 transition-colors"
                       title="删除"
                     >
                       <Trash2 class="w-4 h-4" />
@@ -405,7 +405,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
               </td>
             </tr>
             <tr v-if="paginatedOrders.length === 0">
-              <td colspan="8" class="px-6 py-12 text-center text-slate-600">
+              <td colspan="8" class="px-6 py-12 text-center text-[var(--text-faint)]">
                 暂无识别数据，请在上方输入订单文本并点击识别
               </td>
             </tr>
@@ -414,22 +414,22 @@ const applyCorrection = (item: orderApi.AuditItem) => {
       </div>
       
       <!-- Pagination -->
-      <div class="p-6 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="p-6 border-t border-[var(--border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
           <!-- 每页显示条数选择器 -->
           <div class="flex items-center gap-2">
-            <label class="text-xs text-slate-500 font-medium">每页显示：</label>
+            <label class="text-xs text-[var(--text-faint)] font-medium">每页显示：</label>
             <select 
               v-model.number="pageSize" 
               @change="changePageSize(pageSize)"
-              class="px-3 py-2 rounded-lg glass-input text-slate-300 text-xs transition-colors"
+              class="px-3 py-2 rounded-lg glass-input text-[var(--text-secondary)] text-xs transition-colors"
             >
               <option v-for="option in pageSizeOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>
           
           <!-- 显示信息 -->
-          <p class="text-xs text-slate-500 font-medium">
+          <p class="text-xs text-[var(--text-faint)] font-medium">
             显示 {{ (currentPage - 1) * pageSize + 1 }} 到 {{ Math.min(currentPage * pageSize, orders.length) }} 条，共 {{ orders.length }} 条记录
           </p>
         </div>
@@ -440,7 +440,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
           <button 
             @click="prevPage"
             :disabled="currentPage === 1"
-            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--bg-hover)] text-[var(--text-faint)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -454,7 +454,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
               :key="page"
               @click="changePage(page)"
               class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
-              :class="currentPage === page ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
+              :class="currentPage === page ? 'bg-[var(--accent)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-on-accent)]'"
             >
               {{ page }}
             </button>
@@ -464,13 +464,13 @@ const applyCorrection = (item: orderApi.AuditItem) => {
             <button 
               @click="changePage(1)"
               class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
-              :class="currentPage === 1 ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
+              :class="currentPage === 1 ? 'bg-[var(--accent)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-on-accent)]'"
             >
               1
             </button>
             
             <!-- 省略号 -->
-            <span v-if="currentPage > 3" class="text-slate-600 text-xs mx-1 px-1">...</span>
+            <span v-if="currentPage > 3" class="text-[var(--text-faint)] text-xs mx-1 px-1">...</span>
             
             <!-- 当前页附近的页码 -->
             <!-- Vue3 中 v-if 优先级高于 v-for，须用 template 包裹使 v-if 进入 v-for 作用域 -->
@@ -478,7 +478,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
               <button
                 v-if="page < currentPage && page > 1"
                 @click="changePage(page)"
-                class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white text-xs font-bold transition-colors"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs font-bold transition-colors"
               >
                 {{ page }}
               </button>
@@ -486,7 +486,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
             
             <!-- 当前页 -->
             <button 
-              class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-600 text-white text-xs font-bold"
+              class="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--text-on-accent)] text-xs font-bold"
             >
               {{ currentPage }}
             </button>
@@ -497,20 +497,20 @@ const applyCorrection = (item: orderApi.AuditItem) => {
               <button
                 v-if="page > currentPage && page < totalPages"
                 @click="changePage(page)"
-                class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white text-xs font-bold transition-colors"
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs font-bold transition-colors"
               >
                 {{ page }}
               </button>
             </template>
             
             <!-- 省略号 -->
-            <span v-if="currentPage < totalPages - 2" class="text-slate-600 text-xs mx-1 px-1">...</span>
+            <span v-if="currentPage < totalPages - 2" class="text-[var(--text-faint)] text-xs mx-1 px-1">...</span>
             
             <!-- 最后一页 -->
             <button 
               @click="changePage(totalPages)"
               class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
-              :class="currentPage === totalPages ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
+              :class="currentPage === totalPages ? 'bg-[var(--accent)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-on-accent)]'"
             >
               {{ totalPages }}
             </button>
@@ -520,7 +520,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
           <button 
             @click="nextPage"
             :disabled="currentPage === totalPages"
-            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--bg-hover)] text-[var(--text-faint)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -531,7 +531,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
     </div>
 
     <!-- 审核结果面板（T22，契约 §3.2） -->
-    <div v-if="auditResult" class="rounded-2xl border border-white/5 bg-[#16191E] p-4 space-y-3">
+    <div v-if="auditResult" class="rounded-2xl border border-[var(--border)] bg-[var(--bg-sidebar)] p-4 space-y-3">
       <div class="flex items-center justify-between gap-2 flex-wrap">
         <h3 class="text-base font-bold flex items-center gap-2">
           审核结果
@@ -543,7 +543,7 @@ const applyCorrection = (item: orderApi.AuditItem) => {
             AI 复核不可用，以下为程序对比结果
           </span>
         </h3>
-        <span class="text-xs text-slate-500">AI 复核建议仅供参考，审核为只读操作，可重复点击「审核」刷新</span>
+        <span class="text-xs text-[var(--text-faint)]">AI 复核建议仅供参考，审核为只读操作，可重复点击「审核」刷新</span>
       </div>
 
       <!-- 汇总计数：缺单/错单/多单/正常 -->
@@ -567,44 +567,44 @@ const applyCorrection = (item: orderApi.AuditItem) => {
               <span class="px-1.5 py-0.5 rounded text-[10px] font-bold" :class="diffTypeMeta[item.diffType].badgeClass">
                 {{ diffTypeMeta[item.diffType].label }}
               </span>
-              <span class="font-medium text-slate-200">{{ item['收件人'] || '-' }}</span>
-              <span class="font-mono text-slate-400">{{ item['手机号'] || '-' }}</span>
-              <span v-if="item.VID > 0" class="text-xs text-slate-500 font-mono">行 {{ item.VID }}</span>
+              <span class="font-medium text-[var(--text-secondary)]">{{ item['收件人'] || '-' }}</span>
+              <span class="font-mono text-[var(--text-muted)]">{{ item['手机号'] || '-' }}</span>
+              <span v-if="item.VID > 0" class="text-xs text-[var(--text-faint)] font-mono">行 {{ item.VID }}</span>
             </div>
             <!-- 真差异项提供应用修正入口：定位对应 VID 行并进入既有行内编辑 -->
             <button
               v-if="canApplyCorrection(item)"
               @click="applyCorrection(item)"
-              class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors text-xs font-medium"
+              class="px-2.5 py-1 rounded-lg bg-[var(--accent-soft-bg)] text-[var(--accent-soft)] hover:bg-[var(--accent-soft-bg-strong)] transition-colors text-xs font-medium"
             >
               应用修正
             </button>
           </div>
-          <p class="text-xs text-slate-400">{{ item['收货地址'] || '-' }}</p>
-          <p class="text-xs text-slate-300">{{ item['商品规格'] || '-' }}</p>
-          <p v-if="item.diffDesc" class="text-xs text-slate-400">{{ item.diffDesc }}</p>
+          <p class="text-xs text-[var(--text-muted)]">{{ item['收货地址'] || '-' }}</p>
+          <p class="text-xs text-[var(--text-secondary)]">{{ item['商品规格'] || '-' }}</p>
+          <p v-if="item.diffDesc" class="text-xs text-[var(--text-muted)]">{{ item.diffDesc }}</p>
           <p v-if="item.aiVerdict" class="text-xs">
             <span class="font-medium" :class="item.aiVerdict === '真差异' ? 'text-red-400' : 'text-green-400'">
               AI 判定：{{ item.aiVerdict }}
             </span>
-            <span v-if="item.aiSuggest" class="text-slate-400">｜建议：{{ item.aiSuggest }}</span>
+            <span v-if="item.aiSuggest" class="text-[var(--text-muted)]">｜建议：{{ item.aiSuggest }}</span>
           </p>
         </li>
       </ul>
-      <p v-else class="text-sm text-slate-500">暂无审核明细</p>
+      <p v-else class="text-sm text-[var(--text-faint)]">暂无审核明细</p>
     </div>
   </section>
 </template>
 
 <style scoped>
 .glass-input {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-strong);
   transition: all 0.2s ease;
 }
 .glass-input:focus {
   outline: none;
-  border-color: #3B82F6;
-  background-color: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent);
+  background-color: var(--bg-hover);
 }
 </style>

@@ -1,45 +1,45 @@
 <template>
-  <div v-if="show" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300">
-    <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-lg w-full mx-4 flex flex-col max-h-[90vh] overflow-y-auto">
+  <div v-if="show" class="fixed inset-0 bg-[var(--overlay)] flex items-center justify-center z-50 transition-opacity duration-300">
+    <div class="bg-[var(--bg-sidebar)] border border-[var(--border-strong)] rounded-2xl p-8 max-w-lg w-full mx-4 flex flex-col max-h-[90vh] overflow-y-auto">
       <!-- Modal Header -->
       <div class="mb-6">
-        <h3 class="text-xl font-bold text-white font-display">修改订单</h3>
-        <p class="text-slate-400 text-sm mt-2">订单 ID：{{ order?.id ?? '-' }}，仅提交修改过的字段</p>
+        <h3 class="text-xl font-bold text-[var(--text-primary)] font-display">修改订单</h3>
+        <p class="text-[var(--text-muted)] text-sm mt-2">订单 ID：{{ order?.id ?? '-' }}，仅提交修改过的字段</p>
       </div>
 
       <!-- Modal Body -->
       <div class="flex-1 space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">收件人</label>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">收件人</label>
             <input type="text" v-model="form.name" placeholder="收件人姓名" class="dialog-input" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-2">手机号</label>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">手机号</label>
             <input type="text" v-model="form.phone" placeholder="手机号" class="dialog-input" />
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">收货地址</label>
+          <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">收货地址</label>
           <input type="text" v-model="form.address" placeholder="省、市、区、具体地址" class="dialog-input" />
-          <p class="text-xs text-slate-500 mt-1">地址变更后，系统将按新地址自动重提取省份</p>
+          <p class="text-xs text-[var(--text-faint)] mt-1">地址变更后，系统将按新地址自动重提取省份</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">省份</label>
+          <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">省份</label>
           <input type="text" v-model="form.province" placeholder="如：福建省" class="dialog-input" />
-          <p class="text-xs text-slate-500 mt-1">不修改本项时随收货地址自动识别；修改（含清空）后以提交值为准</p>
+          <p class="text-xs text-[var(--text-faint)] mt-1">不修改本项时随收货地址自动识别；修改（含清空）后以提交值为准</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">商品规格</label>
+          <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">商品规格</label>
           <input type="text" v-model="form.item" placeholder="如：【香水柠檬5斤】" class="dialog-input" />
-          <p class="text-xs text-slate-500 mt-1">不可清空，只能整体替换；多项用逗号分隔，如【香水柠檬5斤】,【葡萄柚10斤】</p>
+          <p class="text-xs text-[var(--text-faint)] mt-1">不可清空，只能整体替换；多项用逗号分隔，如【香水柠檬5斤】,【葡萄柚10斤】</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-slate-300 mb-2">备注</label>
+          <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">备注</label>
           <input type="text" v-model="form.remark" placeholder="备注（留空提交即清空）" class="dialog-input" />
         </div>
       </div>
@@ -47,14 +47,14 @@
       <!-- Modal Footer -->
       <div class="mt-6 flex items-center justify-end gap-3">
         <button
-          class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          class="px-6 py-2 rounded-lg bg-[var(--bg-hover)] hover:bg-[var(--bg-hover-strong)] text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="isSubmitting"
           @click="handleCancel"
         >
           取消
         </button>
         <button
-          class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          class="px-6 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--text-on-accent)] font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="isSubmitting"
           @click="handleSave"
         >
@@ -199,18 +199,18 @@ const handleSave = async () => {
   width: 100%;
   padding: 0.5rem 1rem;
   border-radius: 0.75rem;
-  background-color: #0f1115;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
   font-size: 0.875rem;
   outline: none;
   transition: all 0.2s ease;
 }
 .dialog-input::placeholder {
-  color: #475569;
+  color: var(--text-faint);
 }
 .dialog-input:focus {
-  border-color: #3b82f6;
+  border-color: var(--accent);
 }
 .font-display {
   font-family: 'Cabinet Grotesk', sans-serif;

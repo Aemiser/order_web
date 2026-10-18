@@ -1,6 +1,6 @@
 <template>
   <div class="time-picker-container">
-    <label v-if="label" class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2 mb-2">
+    <label v-if="label" class="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-[0.1em] flex items-center gap-2 mb-2">
       {{ label }}
     </label>
     <div class="relative">

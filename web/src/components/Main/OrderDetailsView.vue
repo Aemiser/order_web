@@ -454,10 +454,10 @@ const handleDeleteOrder = async (order: OrderDetailRow) => {
 
 const getTagClass = (color: string) => {
   switch (color) {
-    case 'blue': return 'bg-blue-500/10 text-blue-400';
-    case 'teal': return 'bg-teal-500/10 text-teal-400';
+    case 'blue': return 'bg-[var(--accent-soft-bg)] text-[var(--accent-soft)]';
+    case 'teal': return 'bg-[var(--teal-soft)] text-[var(--teal)]';
     case 'purple': return 'bg-purple-500/10 text-purple-400';
-    default: return 'bg-slate-500/10 text-slate-400';
+    default: return 'bg-slate-500/10 text-[var(--text-muted)]';
   }
 };
 
@@ -490,17 +490,17 @@ const resetQuery = async () => {
     </div>
 
     <!-- Advanced Query Section -->
-    <section class="bg-[#16191E] border border-white/5 rounded-2xl p-4 shadow-sm">
+    <section class="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-2xl p-4 shadow-sm">
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
-          <div class="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+          <div class="w-1.5 h-6 bg-[var(--accent)] rounded-full"></div>
           <h3 class="text-lg font-bold font-display">高级查询筛选</h3>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-xs text-slate-500 font-medium tracking-wide">共计 {{ totalOrders }} 条订单记录</span>
+          <span class="text-xs text-[var(--text-faint)] font-medium tracking-wide">共计 {{ totalOrders }} 条订单记录</span>
           <button 
             @click="toggleQuery"
-            class="flex items-center gap-2 p-2 px-3 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-all text-xs font-medium border border-white/5 active:scale-95"
+            class="flex items-center gap-2 p-2 px-3 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all text-xs font-medium border border-[var(--border)] active:scale-95"
           >
             <span>{{ isExpanded ? '收起筛选' : '展开筛选' }}</span>
             <ChevronDown 
@@ -518,47 +518,47 @@ const resetQuery = async () => {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
 
           <div class="space-y-2">
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2">
+            <label class="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-[0.1em] flex items-center gap-2">
               客户姓名
             </label>
             <div class="relative">
-              <User class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/60" />
-              <input type="text" v-model="searchParams.name" placeholder="搜索姓名..." class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-slate-200">
+              <User class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--accent)]/60" />
+              <input type="text" v-model="searchParams.name" placeholder="搜索姓名..." class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-[var(--text-secondary)]">
             </div>
           </div>
           
           <div class="space-y-2">
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2">
+            <label class="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-[0.1em] flex items-center gap-2">
               联系电话
             </label>
             <div class="relative">
-              <Phone class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/60" />
-              <input type="text" v-model="searchParams.phone" placeholder="手机号或固话..." class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-slate-200">
+              <Phone class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--accent)]/60" />
+              <input type="text" v-model="searchParams.phone" placeholder="手机号或固话..." class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-[var(--text-secondary)]">
             </div>
           </div>
           
           <div class="space-y-2">
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2">
+            <label class="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-[0.1em] flex items-center gap-2">
               收货地址
             </label>
             <div class="relative">
-              <MapPin class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/60" />
-              <input type="text" v-model="searchParams.address" placeholder="省、市、区、具体地址..." class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-slate-200">
+              <MapPin class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--accent)]/60" />
+              <input type="text" v-model="searchParams.address" placeholder="省、市、区、具体地址..." class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-[var(--text-secondary)]">
             </div>
           </div>
 
 <!--          <div class="space-y-2">-->
-<!--            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2">-->
+<!--            <label class="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-[0.1em] flex items-center gap-2">-->
 <!--              规格信息-->
 <!--            </label>-->
 <!--            <div class="relative">-->
-<!--              <Package class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/60" />-->
-<!--              <input type="text" v-model="searchParams.item" placeholder="商品名称或规格..." class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-slate-200">-->
+<!--              <Package class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--accent)]/60" />-->
+<!--              <input type="text" v-model="searchParams.item" placeholder="商品名称或规格..." class="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-sm text-[var(--text-secondary)]">-->
 <!--            </div>-->
 <!--          </div>-->
           
           <div class="space-y-2 col-span-1 md:col-span-2">
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2">
+            <label class="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-[0.1em] flex items-center gap-2">
               日期范围
             </label>
             <div class="relative">
@@ -578,13 +578,13 @@ const resetQuery = async () => {
           </div>
 
           <div class="space-y-2 ">
-            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] flex items-center gap-2">
+            <label class="text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-[0.1em] flex items-center gap-2">
               关键词搜索
             </label>
             <div class="relative">
-              <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500/60" />
-              <input type="text" v-model="searchParams.keyword" @input="handleKeywordSearch" placeholder="可搜姓名/手机号/地址/省份/商品/备注" class="w-full pl-9 pr-10 py-2.5 rounded-xl glass-input text-sm text-slate-200">
-              <button v-if="searchParams.keyword" @click="searchParams.keyword = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
+              <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--accent)]/60" />
+              <input type="text" v-model="searchParams.keyword" @input="handleKeywordSearch" placeholder="可搜姓名/手机号/地址/省份/商品/备注" class="w-full pl-9 pr-10 py-2.5 rounded-xl glass-input text-sm text-[var(--text-secondary)]">
+              <button v-if="searchParams.keyword" @click="searchParams.keyword = ''" class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)] hover:text-[var(--text-primary)] transition-colors">
                 &times;
               </button>
             </div>
@@ -597,30 +597,30 @@ const resetQuery = async () => {
         </div>
       </div>
       
-      <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-white/5">
+      <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-[var(--border)]">
         <div class="flex gap-3">
         <button
             @click="exportToExcel"
             :disabled="orderDetails.length === 0"
-            class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-bold border border-white/10 transition-all flex items-center gap-1.5 active:scale-95 text-xs">
+            class="px-4 py-2 rounded-lg bg-[var(--bg-hover)] hover:bg-[var(--bg-hover-strong)] text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold border border-[var(--border-strong)] transition-all flex items-center gap-1.5 active:scale-95 text-xs">
           批量导出 <Download class="w-3.5 h-3.5" />
         </button>
         </div>
-        <button @click="resetQuery" class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-bold border border-white/10 transition-all flex items-center gap-1.5 active:scale-95 text-xs">
+        <button @click="resetQuery" class="px-4 py-2 rounded-lg bg-[var(--bg-hover)] hover:bg-[var(--bg-hover-strong)] text-[var(--text-muted)] hover:text-[var(--text-primary)] font-bold border border-[var(--border-strong)] transition-all flex items-center gap-1.5 active:scale-95 text-xs">
           <RotateCcw class="w-3.5 h-3.5" /> 重置筛选
         </button>
-        <button @click="fetchOrderData" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-1.5 active:scale-95 text-xs">
+        <button @click="fetchOrderData" class="px-6 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--text-on-accent)] font-bold shadow-lg shadow-[var(--accent-glow)] transition-all flex items-center gap-1.5 active:scale-95 text-xs">
           <Search class="w-3.5 h-3.5" /> 立即查询
         </button>
       </div>
     </section>
 
     <!-- Province Map Section：省份订单分布（T19 懒加载，随上方筛选时间范围联动刷新） -->
-    <section class="bg-[#16191E] border border-white/5 rounded-2xl p-4 shadow-sm">
+    <section class="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-2xl p-4 shadow-sm">
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+        <div class="w-1.5 h-6 bg-[var(--accent)] rounded-full"></div>
         <h3 class="text-lg font-bold font-display">省份订单分布</h3>
-        <span class="text-xs text-slate-500 font-medium tracking-wide">
+        <span class="text-xs text-[var(--text-faint)] font-medium tracking-wide">
           {{ provinceMapTimeRange.startTime ? '按筛选时间范围统计' : '按全部时间统计' }}
         </span>
       </div>
@@ -628,11 +628,11 @@ const resetQuery = async () => {
     </section>
 
     <!-- Table Section -->
-    <section class="bg-[#16191E] border border-white/5 rounded-2xl overflow-hidden shadow-xl relative">
+    <section class="bg-[var(--bg-sidebar)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-xl relative">
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm border-collapse">
-          <thead class="bg-white/5 text-slate-400 font-medium">
-            <tr class="border-b border-white/5">
+          <thead class="bg-[var(--bg-hover)] text-[var(--text-muted)] font-medium">
+            <tr class="border-b border-[var(--border)]">
               <th class="px-6 py-5">创建时间</th>
               <th class="px-6 py-5">客户姓名</th>
               <th class="px-6 py-5">联系电话</th>
@@ -645,13 +645,13 @@ const resetQuery = async () => {
               <th class="px-6 py-5">操作</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-white/5">
-            <tr v-for="(order, index) in orderDetails" :key="index" class="table-row-hover transition-colors" :class="{ 'bg-blue-600/[0.04]': index % 2 === 1 }">
-              <td class="px-6 py-5 text-slate-500 text-xs font-mono">{{ order.time }}</td>
+          <tbody class="divide-y divide-[var(--border)]">
+            <tr v-for="(order, index) in orderDetails" :key="index" class="table-row-hover transition-colors" :class="{ 'bg-[var(--accent-soft-bg)]': index % 2 === 1 }">
+              <td class="px-6 py-5 text-[var(--text-faint)] text-xs font-mono">{{ order.time }}</td>
               <td class="px-6 py-5 font-medium">{{ order.name || '未知姓名' }}</td>
-              <td class="px-6 py-5 font-mono text-slate-400">{{ order.phone || '未知电话' }}</td>
-              <td class="px-6 py-5 text-slate-400 max-w-[200px]">{{ order.address || '未知地址' }}</td>
-              <td class="px-6 py-5 text-slate-400">{{ order.province || '-' }}</td>
+              <td class="px-6 py-5 font-mono text-[var(--text-muted)]">{{ order.phone || '未知电话' }}</td>
+              <td class="px-6 py-5 text-[var(--text-muted)] max-w-[200px]">{{ order.address || '未知地址' }}</td>
+              <td class="px-6 py-5 text-[var(--text-muted)]">{{ order.province || '-' }}</td>
 
               <td class="px-6 py-5">
                 <span class="px-2.5 py-1 rounded-md text-xs" :class="getTagClass(order.color)">
@@ -659,20 +659,20 @@ const resetQuery = async () => {
                 </span>
               </td>
               <td class="px-6 py-5 font-medium">{{ order.remark || '-' }}</td>
-<!--              <td class="px-6 py-5 font-bold text-slate-200">{{ order.quantity }}</td>-->
+<!--              <td class="px-6 py-5 font-bold text-[var(--text-secondary)]">{{ order.quantity }}</td>-->
 
               <td class="px-6 py-5">
                 <!-- 契约 §3.3：仅 id>0 的历史订单行显示操作按钮，预览行（id=0）不显示 -->
                 <div v-if="order.id > 0" class="flex gap-2">
                   <button
-                    class="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-white transition-colors"
+                    class="p-2 rounded-lg bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                     title="编辑"
                     @click="openEditDialog(order)"
                   >
                     <Edit2 class="w-4 h-4" />
                   </button>
                   <button
-                    class="p-2 rounded-lg bg-white/5 text-red-400/60 hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="p-2 rounded-lg bg-[var(--bg-hover)] text-red-400/60 hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="删除"
                     :disabled="deletingId === order.id"
                     @click="handleDeleteOrder(order)"
@@ -687,22 +687,22 @@ const resetQuery = async () => {
       </div>
       
       <!-- Pagination -->
-      <div class="p-6 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="p-6 border-t border-[var(--border)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
           <!-- 每页显示条数选择器 -->
           <div class="flex items-center gap-2">
-            <label class="text-xs text-slate-500 font-medium">每页显示：</label>
+            <label class="text-xs text-[var(--text-faint)] font-medium">每页显示：</label>
             <select 
               v-model.number="pageSize" 
               @change="changePageSize(pageSize)"
-              class="px-3 py-2 rounded-lg glass-input text-slate-300 text-xs transition-colors"
+              class="px-3 py-2 rounded-lg glass-input text-[var(--text-secondary)] text-xs transition-colors"
             >
               <option v-for="option in pageSizeOptions" :key="option" :value="option">{{ option }}</option>
             </select>
           </div>
           
           <!-- 显示信息 -->
-          <p class="text-xs text-slate-500 font-medium">
+          <p class="text-xs text-[var(--text-faint)] font-medium">
             显示 {{ (currentPage - 1) * pageSize + 1 }} 到 {{ Math.min(currentPage * pageSize, totalOrders) }} 条，共 {{ totalOrders }} 条记录
           </p>
         </div>
@@ -713,7 +713,7 @@ const resetQuery = async () => {
           <button 
             @click="prevPage"
             :disabled="currentPage === 1"
-            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--bg-hover)] text-[var(--text-faint)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft class="w-4 h-4" />
           </button>
@@ -724,18 +724,18 @@ const resetQuery = async () => {
               v-if="item.type === 'page'"
               @click="changePage(item.value)"
               class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-colors"
-              :class="currentPage === item.value ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'"
+              :class="currentPage === item.value ? 'bg-[var(--accent)] text-[var(--text-on-accent)]' : 'bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-on-accent)]'"
             >
               {{ item.value }}
             </button>
-            <span v-else class="text-slate-600 text-xs mx-1 px-1 select-none">...</span>
+            <span v-else class="text-[var(--text-faint)] text-xs mx-1 px-1 select-none">...</span>
           </template>
           
           <!-- 下一页按钮 -->
           <button 
             @click="nextPage"
             :disabled="currentPage === totalPages"
-            class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--bg-hover)] text-[var(--text-faint)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronRight class="w-4 h-4" />
           </button>
@@ -744,9 +744,9 @@ const resetQuery = async () => {
       
       <!-- 加载状态 -->
       <div v-if="isLoading" class="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
-        <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 flex flex-col items-center gap-4">
-          <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p class="text-slate-300 font-medium">加载中...</p>
+        <div class="bg-[var(--bg-sidebar)] border border-[var(--border-strong)] rounded-2xl p-8 flex flex-col items-center gap-4">
+          <div class="w-12 h-12 border-4 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-[var(--text-secondary)] font-medium">加载中...</p>
         </div>
       </div>
     </section>
@@ -763,14 +763,14 @@ const resetQuery = async () => {
 
 <style scoped>
 .glass-input {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-strong);
   transition: all 0.2s ease;
 }
 .glass-input:focus {
   outline: none;
-  border-color: #3B82F6;
-  background-color: rgba(255, 255, 255, 0.06);
+  border-color: var(--accent);
+  background-color: var(--bg-hover);
 }
 /* 日期选择框样式优化 */
 input[type="date"] {
@@ -808,104 +808,104 @@ input[type="date"].border-red-400 {
 }
 
 :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-strong);
   border-radius: 0.75rem;
   transition: all 0.2s ease;
   box-sizing: border-box !important;
 }
 
 :deep(.el-input__wrapper:hover) {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-strong);
 }
 
 :deep(.el-input__wrapper.is-focus) {
-  border-color: #3B82F6;
-  background-color: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 0 1px #3B82F6 inset;
+  border-color: var(--accent);
+  background-color: var(--bg-hover);
+  box-shadow: 0 0 0 1px var(--accent) inset;
 }
 
 :deep(.el-input__inner) {
-  color: #e2e8f0;
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
 :deep(.el-input__placeholder) {
-  color: #94A3B8;
+  color: var(--text-muted);
 }
 
 :deep(.el-range-separator) {
-  color: #94A3B8;
+  color: var(--text-muted);
 }
 
 /* 日期选择器弹出层样式 */
 .date-picker-popper {
-  background-color: #1E2228 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-strong) !important;
   border-radius: 0.75rem !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
 }
 
 :deep(.el-date-picker__header) {
-  background-color: #1E2228 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-strong) !important;
 }
 
 :deep(.el-date-picker__header-label) {
-  color: #e2e8f0 !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.el-date-picker__prev-btn:hover, .el-date-picker__next-btn:hover) {
-  color: #3B82F6 !important;
+  color: var(--accent) !important;
 }
 
 :deep(.el-date-table th) {
-  color: #94A3B8 !important;
+  color: var(--text-muted) !important;
 }
 
 :deep(.el-date-table td) {
-  color: #e2e8f0 !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.el-date-table td:hover) {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: var(--bg-hover) !important;
 }
 
 :deep(.el-date-table td.is-selected) {
-  background-color: #3B82F6 !important;
+  background-color: var(--accent) !important;
 }
 
 :deep(.el-date-table td.is-today) {
-  color: #3B82F6 !important;
+  color: var(--accent) !important;
 }
 
 :deep(.el-date-table td.is-disabled) {
-  color: #475569 !important;
+  color: var(--text-faint) !important;
 }
 
 :deep(.el-picker-panel__footer) {
-  background-color: #1E2228 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border-top: 1px solid var(--border-strong) !important;
 }
 
 :deep(.el-button--primary) {
-  background-color: #3B82F6 !important;
-  border-color: #3B82F6 !important;
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
 }
 
 :deep(.el-button--default) {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  color: #e2e8f0 !important;
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.el-button--default:hover) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: var(--bg-hover-strong) !important;
+  border-color: var(--border-strong) !important;
 }
 
 .table-row-hover:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: var(--bg-hover-faint);
 }
 .font-display {
   font-family: 'Cabinet Grotesk', sans-serif;
@@ -916,19 +916,19 @@ input[type="date"].border-red-400 {
 /* ElMessageBox 二次确认框暗色适配（T20）：
    该组件挂载于 body 之下，scoped/:deep 无法命中，需以命名空间类提供全局样式。 */
 .order-action-msgbox {
-  background-color: #1e2228 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-strong) !important;
 }
 .order-action-msgbox .el-message-box__title {
-  color: #e2e8f0 !important;
+  color: var(--text-secondary) !important;
 }
 .order-action-msgbox .el-message-box__message {
   color: #cbd5e1 !important;
 }
 .order-action-msgbox .el-message-box__btns .el-button {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  color: #e2e8f0 !important;
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text-secondary) !important;
 }
 .order-action-msgbox .el-message-box__btns .el-button--danger {
   background-color: #dc2626 !important;
@@ -936,8 +936,8 @@ input[type="date"].border-red-400 {
   color: #ffffff !important;
 }
 .order-action-msgbox .el-message-box__btns .el-button--primary {
-  background-color: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
   color: #ffffff !important;
 }
 </style>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { Info, Download, RotateCw, SlidersHorizontal, Wallet, DollarSign } from 'lucide-vue-next';
 import { ElDatePicker } from 'element-plus';
 import * as XLSX from 'xlsx';
 
 import Sidebar from './components/Sidebar/Sidebar.vue';
 import Header from './components/Header/Header.vue';
+import LoginView from './components/Login/LoginView.vue';
 import FieldDialog from './components/Main/Dialog/Field.vue';
 
 import OrderInputView from './components/Main/OrderInputView.vue';
@@ -15,8 +16,43 @@ import CheckoutView from './components/Main/Checkout/CheckoutView.vue';
 import * as orderApi from './api/order';
 import * as checkoutApi from './api/checkout';
 import { BASE } from './api/request';
+import * as authApi from './api/authApi';
+import { isAuthed, currentUser, clearSession, setUnauthorizedHandler, getToken } from './api/auth';
 import type { Order } from './types';
 
+// --- 主题 ---
+const THEME_KEY = 'order_web_theme';
+const theme = ref<string>(localStorage.getItem(THEME_KEY) || 'dark');
+const applyTheme = (t: string) => {
+  theme.value = t;
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem(THEME_KEY, t);
+};
+const switchTheme = (t: string) => applyTheme(t);
+
+// --- 登录守卫 ---
+const handleLoginSuccess = () => {
+  // 登录成功后刷新用户信息并留在主界面
+  void refreshCurrentUser();
+};
+const refreshCurrentUser = async () => {
+  if (!getToken()) return;
+  try {
+    const user = await authApi.me();
+    currentUser.value = user;
+    localStorage.setItem('order_web_user', JSON.stringify(user));
+  } catch {
+    // 401 已由 request.ts 统一踢回登录页
+  }
+};
+const handleLogout = async () => {
+  try {
+    await authApi.logout();
+  } catch {
+    // 忽略登出接口异常，本地清理照常进行
+  }
+  clearSession();
+};
 
 // --- State ---
 const activeTab = ref('input');
@@ -444,20 +480,42 @@ const handleFieldDataLoading = (isLoading: boolean) => {
   console.log('字段数据加载状态:', isLoading);
 };
 
+// --- 生命周期 ---
+onMounted(() => {
+  applyTheme(theme.value);
+  // 注册全局 401 处理器：登录态失效自动回到登录页
+  setUnauthorizedHandler(() => {
+    // 无需额外操作，isAuthed 变 false 后模板自动切到登录页
+  });
+  // 已有令牌时刷新一次用户信息
+  void refreshCurrentUser();
+});
+
+onBeforeUnmount(() => {
+  setUnauthorizedHandler(() => {});
+});
+
 </script>
 
 <template>
-  <div class="flex h-screen w-full overflow-hidden bg-[#0F1115] text-white font-sans">
+  <!-- 未登录：登录页 -->
+  <LoginView v-if="!isAuthed" @success="handleLoginSuccess" />
+
+  <!-- 已登录：主界面 -->
+  <div v-else class="flex h-screen w-full overflow-hidden bg-[var(--bg-app)] text-[var(--text-primary)] font-sans">
     <Sidebar
       v-model:activeTab="activeTab"
       :isSystemReady="isSystemReady"
       :statusMessage="statusMessage"
     />
 
-    <main class="flex-1 flex flex-col min-w-0 bg-[#0F1115]">
+    <main class="flex-1 flex flex-col min-w-0 bg-[var(--bg-app)]">
       <Header
-        userName="Admin User"
-        userRole="高级管理员"
+        :userName="currentUser?.nickname || currentUser?.username || 'Admin User'"
+        :userRole="currentUser?.role === 'admin' ? '高级管理员' : '普通操作员'"
+        :theme="theme"
+        @switch-theme="switchTheme"
+        @logout="handleLogout"
       />
 
       <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
@@ -503,22 +561,22 @@ const handleFieldDataLoading = (isLoading: boolean) => {
       <!-- Bottom Action Bar (Only show for Input view) -->
       <footer 
         v-if="activeTab === 'input'"
-        class="h-20 bg-[#16191E] border-t border-white/5 px-8 flex items-center justify-between shrink-0"
+        class="h-20 bg-[var(--bg-sidebar)] border-t border-[var(--border)] px-8 flex items-center justify-between shrink-0"
       >
-        <div class="flex items-center gap-4 text-sm text-slate-400">
+        <div class="flex items-center gap-4 text-sm text-[var(--text-muted)]">
           <span class="flex items-center gap-2">
-            <Info class="w-4 h-4 text-blue-500" />
+            <Info class="w-4 h-4 text-[var(--accent)]" />
             共计识别 {{ totalOrders }} 条订单，预计文件大小 {{ estimatedSize }} KB
           </span>
         </div>
         <div class="flex items-center gap-4">
-          <button @click="createOrder" class="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-all">
+          <button @click="createOrder" class="px-8 py-3 rounded-xl bg-[var(--bg-hover)] hover:bg-[var(--bg-hover-strong)] text-[var(--text-primary)] font-medium transition-all">
             确认数据无误
           </button>
           <button 
             @click="exportToExcel"
             :disabled="orders.length === 0"
-            class="px-10 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold flex items-center gap-2 shadow-xl shadow-blue-600/30 transition-all"
+            class="px-10 py-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-on-accent)] font-bold flex items-center gap-2 shadow-xl shadow-[var(--accent-glow)] transition-all"
           >
             导出 XLSX 表格 <Download class="w-4 h-4" />
           </button>
@@ -528,35 +586,35 @@ const handleFieldDataLoading = (isLoading: boolean) => {
       <!-- Bottom Action Bar (Only show for Checkout view) -->
       <footer 
         v-if="activeTab === 'checkout'"
-        class="h-20 bg-[#16191E] border-t border-white/5 px-8 flex items-center justify-between shrink-0"
+        class="h-20 bg-[var(--bg-sidebar)] border-t border-[var(--border)] px-8 flex items-center justify-between shrink-0"
       >
-        <div class="flex items-center gap-4 text-xs text-slate-500">
+        <div class="flex items-center gap-4 text-xs text-[var(--text-faint)]">
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+            <span class="w-2 h-2 rounded-full bg-[var(--accent)]"></span>
             <span>已选定 {{ selectedDays }} 天数据</span>
           </div>
-<!--          <div class="w-px h-4 bg-white/10"></div>-->
-<!--          <p>总成交品种: <span class="text-white font-bold">14项</span></p>-->
+<!--          <div class="w-px h-4 bg-[var(--bg-hover-strong)]"></div>-->
+<!--          <p>总成交品种: <span class="text-[var(--text-primary)] font-bold">14项</span></p>-->
         </div>
         <div class="flex items-center gap-3">
           <!-- 编辑模式下的按钮 -->
           <template v-if="isEditMode">
             <button 
               @click="handleClearPrices"
-              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+              class="h-10 px-5 rounded-xl border border-[var(--border-strong)] text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all flex items-center gap-2"
             >
               <span class="text-xs font-bold">清空</span>
             </button>
             <button 
               @click="handleExitEditMode"
-              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2"
+              class="h-10 px-5 rounded-xl border border-[var(--border-strong)] text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all flex items-center gap-2"
             >
               <span class="text-xs font-bold">取消</span>
             </button>
             <button 
               @click="handleSavePrices()"
               :disabled="isLoading"
-              class="h-10 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+              class="h-10 px-8 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-on-accent)] font-bold shadow-lg shadow-[var(--accent-glow)] transition-all flex items-center gap-2"
             >
               <span v-if="isLoading" class="animate-spin mr-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -570,7 +628,7 @@ const handleFieldDataLoading = (isLoading: boolean) => {
           <template v-else>
             <button 
               :disabled="!hasCheckoutData"
-              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              class="h-10 px-5 rounded-xl border border-[var(--border-strong)] text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
             >
               <RotateCw class="w-4 h-4" />
               <span class="text-xs font-bold">刷新数据</span>
@@ -578,16 +636,16 @@ const handleFieldDataLoading = (isLoading: boolean) => {
             <button 
               @click="handleConfig"
               :disabled="!fieldDataLoaded || isLoadingFieldData"
-              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="h-10 px-5 rounded-xl border border-[var(--border-strong)] text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <div v-if="isLoadingFieldData" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              <div v-if="isLoadingFieldData" class="w-4 h-4 border-2 border-[var(--border-strong)] border-t-[var(--accent)] rounded-full animate-spin"></div>
               <SlidersHorizontal v-else class="w-4 h-4" />
               <span class="text-xs font-bold">{{ isLoadingFieldData ? '加载中...' : '字段配置' }}</span>
             </button>
             <button 
               @click="handleEnterEditMode"
               :disabled="!hasCheckoutData"
-              class="h-10 px-5 rounded-xl border border-white/10 text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              class="h-10 px-5 rounded-xl border border-[var(--border-strong)] text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
             >
               <DollarSign class="w-4 h-4" />
               <span class="text-xs font-bold">编辑金额</span>
@@ -595,7 +653,7 @@ const handleFieldDataLoading = (isLoading: boolean) => {
             <button 
               @click="handleCheckout"
               :disabled="!hasCheckoutData"
-              class="h-10 px-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+              class="h-10 px-8 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-on-accent)] font-bold shadow-lg shadow-[var(--accent-glow)] transition-all flex items-center gap-2"
             >
               <Wallet class="w-4 h-4" />
               <span class="text-xs font-bold">财务结算</span>
@@ -605,14 +663,14 @@ const handleFieldDataLoading = (isLoading: boolean) => {
       </footer>
 
       <!-- Confirmation Modal -->
-      <div v-if="showConfirmModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 transition-opacity duration-300">
-        <div class="bg-[#16191E] border border-white/10 rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
-          <h3 class="text-xl font-bold text-white mb-4 font-display">确认操作</h3>
-          <p class="text-slate-300 mb-6">请确保今日的订单绝对正确，不然会影响结账！！！</p>
+      <div v-if="showConfirmModal" class="fixed inset-0 bg-[var(--overlay)] flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-[var(--bg-sidebar)] border border-[var(--border-strong)] rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 scale-100">
+          <h3 class="text-xl font-bold text-[var(--text-primary)] mb-4 font-display">确认操作</h3>
+          <p class="text-[var(--text-secondary)] mb-6">请确保今日的订单绝对正确，不然会影响结账！！！</p>
           
           <!-- 时间选择器 -->
           <div class="mb-6">
-            <label class="block text-sm font-medium text-slate-400 mb-2">选择订单日期</label>
+            <label class="block text-sm font-medium text-[var(--text-muted)] mb-2">选择订单日期</label>
             <ElDatePicker
               v-model="selectedDateTime"
               type="datetime"
@@ -627,10 +685,10 @@ const handleFieldDataLoading = (isLoading: boolean) => {
           </div>
           
           <div class="flex justify-end gap-4">
-            <button @click="handleCancel" class="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-medium transition-all">
+            <button @click="handleCancel" class="px-6 py-2 rounded-lg bg-[var(--bg-hover)] hover:bg-[var(--bg-hover-strong)] text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium transition-all">
               取消
             </button>
-            <button @click="handleConfirm" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all">
+            <button @click="handleConfirm" class="px-6 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--text-on-accent)] font-medium transition-all">
               确定
             </button>
           </div>
@@ -662,7 +720,7 @@ const handleFieldDataLoading = (isLoading: boolean) => {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--text-faint);
   border-radius: 10px;
 }
 
@@ -682,99 +740,99 @@ const handleFieldDataLoading = (isLoading: boolean) => {
 }
 
 :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-strong);
   border-radius: 0.75rem;
   transition: all 0.2s ease;
   box-sizing: border-box !important;
 }
 
 :deep(.el-input__wrapper:hover) {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-strong);
 }
 
 :deep(.el-input__wrapper.is-focus) {
-  border-color: #3B82F6;
-  background-color: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 0 1px #3B82F6 inset;
+  border-color: var(--accent);
+  background-color: var(--bg-hover);
+  box-shadow: 0 0 0 1px var(--accent) inset;
 }
 
 :deep(.el-input__inner) {
-  color: #e2e8f0;
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
 :deep(.el-input__placeholder) {
-  color: #94A3B8;
+  color: var(--text-muted);
 }
 
 :deep(.el-range-separator) {
-  color: #94A3B8;
+  color: var(--text-muted);
 }
 
 /* 日期选择器弹出层样式 */
 .date-picker-popper {
-  background-color: #1E2228 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-strong) !important;
   border-radius: 0.75rem !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: var(--shadow-card) !important;
 }
 
 :deep(.el-date-picker__header) {
-  background-color: #1E2228 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-strong) !important;
 }
 
 :deep(.el-date-picker__header-label) {
-  color: #e2e8f0 !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.el-date-picker__prev-btn:hover, .el-date-picker__next-btn:hover) {
-  color: #3B82F6 !important;
+  color: var(--accent) !important;
 }
 
 :deep(.el-date-table th) {
-  color: #94A3B8 !important;
+  color: var(--text-muted) !important;
 }
 
 :deep(.el-date-table td) {
-  color: #e2e8f0 !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.el-date-table td:hover) {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: var(--bg-hover) !important;
 }
 
 :deep(.el-date-table td.is-selected) {
-  background-color: #3B82F6 !important;
+  background-color: var(--accent) !important;
 }
 
 :deep(.el-date-table td.is-today) {
-  color: #3B82F6 !important;
+  color: var(--accent) !important;
 }
 
 :deep(.el-date-table td.is-disabled) {
-  color: #475569 !important;
+  color: var(--text-faint) !important;
 }
 
 :deep(.el-picker-panel__footer) {
-  background-color: #1E2228 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--bg-card) !important;
+  border-top: 1px solid var(--border-strong) !important;
 }
 
 :deep(.el-button--primary) {
-  background-color: #3B82F6 !important;
-  border-color: #3B82F6 !important;
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
 }
 
 :deep(.el-button--default) {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  color: #e2e8f0 !important;
+  background-color: var(--bg-hover) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text-secondary) !important;
 }
 
 :deep(.el-button--default:hover) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: var(--bg-hover-strong) !important;
+  border-color: var(--border-strong) !important;
 }
 </style>

@@ -55,7 +55,7 @@
                     @blur="saveUnit"
                     @keyup.enter="saveUnit"
                     @keyup.esc="cancelEditUnit"
-                    class="bg-white/5 border border-white/10 rounded px-3 py-1 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                    class="bg-[var(--bg-hover)] border border-[var(--border-strong)] rounded px-3 py-1 text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors text-sm"
                     placeholder="输入计量单位"
                   />
                   <button 
@@ -69,7 +69,7 @@
                   </button>
                   <button 
                     @click="cancelEditUnit"
-                    class="p-1 rounded bg-white/5 text-slate-400 hover:text-white transition-colors"
+                    class="p-1 rounded bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                     title="取消"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,7 +79,7 @@
                 </div>
               </template>
               <template v-else>
-                <span @click="startEditUnit" class="cursor-pointer hover:text-blue-400 transition-colors">
+                <span @click="startEditUnit" class="cursor-pointer hover:text-[var(--accent-soft)] transition-colors">
                   {{ unitOfMeasure }}
                 </span>
               </template>
@@ -92,7 +92,7 @@
                     :value="productPrices[productIndex] || ''"
                     @input="handleProductPriceChange(productIndex, ($event.target as HTMLInputElement).value)"
                     :style="{ color: getProductColor(product.name), borderColor: getProductColor(product.name) + '40', width: '100%', boxSizing: 'border-box' }"
-                    class="bg-white/5 border rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
+                    class="bg-[var(--bg-hover)] border rounded px-3 py-2 text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors text-center"
                     placeholder="0.00"
                   />
                 </template>
@@ -114,7 +114,7 @@
                     :value="editPrices[getSpecIndex(productIndex, specIndex)] || ''"
                     @input="handlePriceChange(getSpecIndex(productIndex, specIndex), ($event.target as HTMLInputElement).value)"
                     :style="{ color: getProductColor(product.name), borderColor: getProductColor(product.name) + '40' }"
-                    class="w-full bg-white/5 border rounded px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500 transition-colors text-center"
+                    class="w-full bg-[var(--bg-hover)] border rounded px-3 py-2 text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors text-center"
                     placeholder="0.00"
                   />
                 </template>
@@ -588,37 +588,10 @@ watch([tableData, products], () => {
 /* 字体导入 */
 @import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800&f[]=satoshi@400,500,700&display=swap');
 
-/* 设计变量 */
-:root {
-  --bg-primary: #0F1115;
-  --bg-card: #1E2228;
-  --accent-blue: #3B82F6;
-  --accent-teal: #14B8A6;
-  --text-primary: #F1F5F9;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
-  --border-light: rgba(255, 255, 255, 0.2);
-  --border-lighter: rgba(255, 255, 255, 0.05);
-  --row-hover: rgba(255, 255, 255, 0.02);
-  --product-border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  background-color: var(--bg-primary);
-  font-family: 'Satoshi', sans-serif;
-  color: var(--text-primary);
-}
-
 /* 表格卡片 */
 .table-card {
   background-color: var(--bg-card);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-strong);
   border-radius: 20px;
   padding: 24px 20px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -627,7 +600,7 @@ body {
 
 .table-wrapper {
   border-radius: 16px;
-  border: 1px solid var(--border-lighter);
+  border: 1px solid var(--border);
   overflow: auto;
   background-color: var(--bg-card);
 }
@@ -640,7 +613,7 @@ table {
 }
 
 th {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-hover);
   color: var(--text-secondary);
   font-weight: 600;
   font-size: 0.95rem;
@@ -651,14 +624,14 @@ th {
 
 .product-group th {
   background: rgba(59, 130, 246, 0.05);
-  color: var(--accent-blue);
+  color: var(--accent);
   font-size: 1rem;
   padding: 14px 8px;
 }
 
 .spec-header th {
-  background: rgba(255, 255, 255, 0.01);
-  color: var(--accent-teal);
+  background: var(--bg-hover-faint);
+  color: var(--teal);
 }
 
 td {
@@ -669,13 +642,13 @@ td {
 }
 
 .data-row:hover td {
-  background-color: var(--row-hover);
+  background-color: var(--bg-hover);
 }
 
 .date-column {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-hover);
   font-weight: 600;
-  color: var(--accent-teal);
+  color: var(--teal);
   text-align: left;
   padding-left: 18px;
   font-size: 1rem;
@@ -691,7 +664,7 @@ td {
 
 .spec-value {
   font-weight: 600;
-  color: var(--accent-blue);
+  color: var(--accent);
   font-size: 1.1rem;
 }
 
@@ -715,13 +688,13 @@ td {
 .total-row td {
   background: rgba(59, 130, 246, 0.05);
   font-weight: 600;
-  color: var(--accent-blue);
+  color: var(--accent);
 }
 
 .total-label {
   background: rgba(59, 130, 246, 0.1);
   font-weight: 700;
-  color: var(--accent-blue);
+  color: var(--accent);
   text-align: left;
   padding-left: 18px;
 }
@@ -733,12 +706,12 @@ td {
 
 .price-row td {
   background: rgba(20, 184, 166, 0.03);
-  color: var(--accent-teal);
+  color: var(--teal);
 }
 
 .price-label {
   font-weight: 600;
-  color: var(--accent-teal);
+  color: var(--teal);
   text-align: left;
   padding-left: 18px;
 }
@@ -751,12 +724,12 @@ td {
 .amount-row td {
   background: rgba(139, 92, 246, 0.05);
   font-weight: 600;
-  color: #A78BFA;
+  color: var(--accent-soft);
 }
 
 .amount-label {
   font-weight: 700;
-  color: #A78BFA;
+  color: var(--accent-soft);
   text-align: left;
   padding-left: 18px;
 }

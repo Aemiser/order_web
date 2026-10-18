@@ -4,9 +4,200 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ============================================================
+   主题系统：语义 CSS 变量 + data-theme 切换
+   ------------------------------------------------------------
+   组件中不写死颜色，统一引用以下语义变量（如 bg-[var(--bg-app)]、
+   text-[var(--text-primary)]）。主题切换只改根元素的 data-theme
+   属性，变量值随之整体替换。默认主题 = 深色（原设计）。
+   ============================================================ */
+
+:root,
+:root[data-theme="dark"] {
+  /* 背景层级 */
+  --bg-app: #0f1115;
+  --bg-sidebar: #16191e;
+  --bg-card: #1e2228;
+  --bg-input: rgba(255, 255, 255, 0.03);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-hover-strong: rgba(255, 255, 255, 0.1);
+  --bg-hover-faint: rgba(255, 255, 255, 0.01);
+  /* 文字层级 */
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+  /* 强调色（蓝） */
+  --text-on-accent: #ffffff;
+  --accent: #2563eb;
+  --accent-hover: #3b82f6;
+  --accent-soft: #60a5fa;
+  --accent-soft-bg: rgba(59, 130, 246, 0.1);
+  --accent-soft-bg-strong: rgba(59, 130, 246, 0.2);
+  --accent-muted: rgba(59, 130, 246, 0.6);
+  --accent-glow: rgba(59, 130, 246, 0.3);
+  --accent-border: rgba(59, 130, 246, 0.2);
+  /* 辅助色 */
+  --teal: #14b8a6;
+  --teal-soft: rgba(20, 184, 166, 0.1);
+  /* 边框 */
+  --border: rgba(255, 255, 255, 0.05);
+  --border-strong: rgba(255, 255, 255, 0.1);
+  /* 遮罩 */
+  --overlay: rgba(0, 0, 0, 0.7);
+  /* 圆角 / 阴影 */
+  --radius-card: 1rem;
+  --shadow-card: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- 主题一：Editorial 编辑杂志风 ----------
+   米白纸感、衬线标题、克制深蓝强调、细线边框、低饱和。 */
+:root[data-theme="editorial"] {
+  --bg-app: #f4f1ea;
+  --bg-sidebar: #ebe6db;
+  --bg-card: #fbf9f4;
+  --bg-input: rgba(30, 41, 59, 0.04);
+  --bg-hover: rgba(30, 41, 59, 0.06);
+  --bg-hover-strong: rgba(30, 41, 59, 0.1);
+  --bg-hover-faint: rgba(30, 41, 59, 0.02);
+  --text-primary: #1f2428;
+  --text-secondary: #3d444b;
+  --text-muted: #6b7280;
+  --text-faint: #9ca3af;
+  --accent: #1f4e79;
+  --accent-hover: #2c6699;
+  --accent-soft: #3d7bb0;
+  --accent-soft-bg: rgba(31, 78, 121, 0.08);
+  --accent-soft-bg-strong: rgba(31, 78, 121, 0.16);
+  --accent-muted: rgba(31, 78, 121, 0.5);
+  --accent-glow: rgba(31, 78, 121, 0.25);
+  --accent-border: rgba(31, 78, 121, 0.18);
+  --teal: #2f6f5f;
+  --teal-soft: rgba(47, 111, 95, 0.1);
+  --border: rgba(30, 41, 59, 0.12);
+  --border-strong: rgba(30, 41, 59, 0.2);
+  --overlay: rgba(31, 36, 40, 0.6);
+  --radius-card: 0.5rem;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- 主题二：Hand-Drawn Doodle 手绘涂鸦风 ----------
+   暖白纸底、手写标题、粗描边卡片、大圆角、彩色点缀、硬阴影。 */
+:root[data-theme="hand-drawn"] {
+  --bg-app: #fdf8ef;
+  --bg-sidebar: #fff3d6;
+  --bg-card: #ffffff;
+  --bg-input: rgba(255, 255, 255, 0.8);
+  --bg-hover: rgba(255, 193, 7, 0.12);
+  --bg-hover-strong: rgba(255, 193, 7, 0.22);
+  --bg-hover-faint: rgba(255, 193, 7, 0.05);
+  --text-primary: #2d2a26;
+  --text-secondary: #57534e;
+  --text-muted: #8a8378;
+  --text-faint: #b0a89a;
+  --accent: #ff7a45;
+  --accent-hover: #ff9d70;
+  --accent-soft: #ffb58f;
+  --accent-soft-bg: rgba(255, 122, 69, 0.12);
+  --accent-soft-bg-strong: rgba(255, 122, 69, 0.24);
+  --accent-muted: rgba(255, 122, 69, 0.55);
+  --accent-glow: rgba(255, 122, 69, 0.3);
+  --accent-border: rgba(255, 122, 69, 0.4);
+  --teal: #2aa79b;
+  --teal-soft: rgba(42, 167, 155, 0.12);
+  --border: #3d3a35;
+  --border-strong: #3d3a35;
+  --overlay: rgba(45, 42, 38, 0.55);
+  --radius-card: 1.25rem;
+  --shadow-card: 4px 4px 0 rgba(45, 42, 38, 0.25);
+}
+
+/* ---------- 主题三：macOS Vibrancy 毛玻璃 ----------
+   半透明玻璃面板、柔和圆角、浅色底、蓝色强调、柔光阴影。 */
+:root[data-theme="macos"] {
+  --bg-app: linear-gradient(135deg, #c6d8f0 0%, #e8eef7 50%, #d7f0ee 100%);
+  --bg-app-fallback: #dde7f3;
+  --bg-sidebar: rgba(255, 255, 255, 0.55);
+  --bg-card: rgba(255, 255, 255, 0.72);
+  --bg-input: rgba(255, 255, 255, 0.6);
+  --bg-hover: rgba(255, 255, 255, 0.45);
+  --bg-hover-strong: rgba(255, 255, 255, 0.65);
+  --bg-hover-faint: rgba(255, 255, 255, 0.3);
+  --text-primary: #1d2939;
+  --text-secondary: #3c4a5f;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+  --accent: #0a84ff;
+  --accent-hover: #3395ff;
+  --accent-soft: #64b2ff;
+  --accent-soft-bg: rgba(10, 132, 255, 0.1);
+  --accent-soft-bg-strong: rgba(10, 132, 255, 0.2);
+  --accent-muted: rgba(10, 132, 255, 0.55);
+  --accent-glow: rgba(10, 132, 255, 0.3);
+  --accent-border: rgba(10, 132, 255, 0.2);
+  --teal: #10b3a3;
+  --teal-soft: rgba(16, 179, 163, 0.1);
+  --border: rgba(255, 255, 255, 0.65);
+  --border-strong: rgba(29, 41, 57, 0.12);
+  --overlay: rgba(29, 41, 57, 0.4);
+  --radius-card: 1.25rem;
+  --shadow-card: 0 12px 32px rgba(29, 41, 57, 0.14);
+}
+
+/* ---------- 主题四：Neo-Brutalist 新野兽派 ----------
+   纯白底、粗黑边框、硬投影（无模糊）、高饱和强调色、大字号。 */
+:root[data-theme="neo"] {
+  --bg-app: #ffffff;
+  --bg-sidebar: #ffe94a;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --bg-hover: #eef2ff;
+  --bg-hover-strong: #dbe4ff;
+  --bg-hover-faint: #f8fafc;
+  --text-primary: #0a0a0a;
+  --text-secondary: #262626;
+  --text-muted: #525252;
+  --text-faint: #a3a3a3;
+  --accent: #e11d48;
+  --accent-hover: #be123c;
+  --accent-soft: #f43f5e;
+  --accent-soft-bg: rgba(225, 29, 72, 0.08);
+  --accent-soft-bg-strong: rgba(225, 29, 72, 0.18);
+  --accent-muted: rgba(225, 29, 72, 0.5);
+  --accent-glow: rgba(225, 29, 72, 0.35);
+  --accent-border: rgba(225, 29, 72, 0.3);
+  --teal: #059669;
+  --teal-soft: rgba(5, 150, 105, 0.12);
+  --border: #0a0a0a;
+  --border-strong: #0a0a0a;
+  --overlay: rgba(10, 10, 10, 0.45);
+  --radius-card: 0;
+  --shadow-card: 6px 6px 0 #0a0a0a;
+}
+
 @layer base {
+  html,
   body {
-    @apply bg-[#0F1115] text-white antialiased;
+    /* macos 主题的渐变背景由 --bg-app 承载；其余主题为纯色，fallback 兜底 */
+    background-color: var(--bg-app-fallback, var(--bg-app));
+    background-image: var(--bg-app);
+    background-attachment: fixed;
+    background-size: cover;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Editorial 主题用衬线字体；其余保持系统无衬线 */
+  :root[data-theme="editorial"] {
+    font-family: "Georgia", "Songti SC", "SimSun", serif;
+  }
+  :root[data-theme="hand-drawn"] {
+    font-family: "Comic Sans MS", "Chalkboard SE", "Marker Felt", "Bradley Hand", cursive;
+  }
+  :root[data-theme="macos"],
+  :root[data-theme="neo"],
+  :root[data-theme="dark"] {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 }
 
@@ -19,6 +210,23 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--text-faint);
   border-radius: 10px;
+}
+
+/* 表格行悬停（供各表格组件复用） */
+.table-row-hover:hover {
+  background: var(--bg-hover);
+}
+
+/* 玻璃态输入框（原 style.css 未随 main.ts 加载，这里补回并主题化） */
+.glass-input {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  transition: all 0.2s ease;
+}
+.glass-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: var(--bg-hover);
 }

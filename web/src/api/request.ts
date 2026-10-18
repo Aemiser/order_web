@@ -1,3 +1,5 @@
+import { getToken, notifyUnauthorized } from './auth';
+
 export const BASE = import.meta.env.VITE_API_BASE ?? '';
 
 export interface ApiResponse<T> {
@@ -7,11 +9,27 @@ export interface ApiResponse<T> {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
+  // 携带登录令牌（JWT Bearer）；无令牌时后端受保护接口一律 401
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+
+  // 登录态失效：清空会话并踢回登录页（登录接口本身走业务码，不在此列）
+  if (res.status === 401) {
+    notifyUnauthorized();
+    throw new Error('登录已过期，请重新登录');
+  }
 
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}`);

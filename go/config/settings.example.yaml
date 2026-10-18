@@ -39,3 +39,10 @@ server:
     port: 8080
     allowOrigins:
         - "http://localhost:3000"
+# 登录鉴权。secret 建议用 32 字节以上随机串（如 openssl rand -base64 32 的输出）。
+# 留空时服务会以进程内随机密钥启动：不构成漏洞，但每次重启所有登录都会失效。
+# expireHours 为令牌有效期，默认 12；issuer 为签发者标识，默认 order_web。
+auth:
+    secret: <JWT签名密钥，随机长字符串>
+    expireHours: 12
+    issuer: order_web

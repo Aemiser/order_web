@@ -73,14 +73,14 @@ onMounted(() => {
   <section class="space-y-4">
     <div class="flex items-center justify-between">
       <h2 class="text-2xl font-bold tracking-tight">新建订单解析</h2>
-      <span class="text-sm text-slate-500">支持直接粘贴文本或拖入文件</span>
+      <span class="text-sm text-[var(--text-faint)]">支持直接粘贴文本或拖入文件</span>
     </div>
     <div class="relative group">
       <textarea 
         :value="inputText"
         @input="$emit('update:inputText', ($event.target as HTMLTextAreaElement).value)"
         placeholder="请在此处输入或粘贴原始订单详情...&#10;示例：王小二 13800138000 上海市静安区XX路XX号 苹果x1 香蕉x2" 
-        class="w-full h-48 p-6 rounded-2xl bg-white/5 border border-white/10 focus:border-blue-500 focus:bg-white/[0.07] outline-none text-slate-200 placeholder:text-slate-600 resize-none font-mono text-sm leading-relaxed transition-all"
+        class="w-full h-48 p-6 rounded-2xl bg-[var(--bg-hover)] border border-[var(--border-strong)] focus:border-[var(--accent)] focus:bg-white/[0.07] outline-none text-[var(--text-secondary)] placeholder:text-[var(--text-faint)] resize-none font-mono text-sm leading-relaxed transition-all"
       ></textarea>
       <div class="absolute bottom-4 right-4 flex items-center gap-3">
         <!-- 模式选择复选框 -->
@@ -91,15 +91,15 @@ onMounted(() => {
               v-model="isAppendMode" 
               class="sr-only peer"
             />
-            <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-            <span class="ml-2 text-sm font-medium text-slate-300">
+            <div class="w-9 h-5 bg-[var(--bg-hover-strong)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[var(--text-on-accent)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--text-primary)] after:border-[var(--text-primary)] after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--accent)]"></div>
+            <span class="ml-2 text-sm font-medium text-[var(--text-secondary)]">
               {{ isAppendMode ? '追加' : '重来' }}
             </span>
           </label>
         </div>
         <button 
           @click="$emit('clear')"
-          class="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 text-sm font-medium transition-colors"
+          class="px-4 py-2 rounded-lg bg-[var(--bg-hover)] hover:bg-[var(--bg-hover-strong)] text-[var(--text-muted)] text-sm font-medium transition-colors"
         >
           清空输入
         </button>
@@ -107,7 +107,7 @@ onMounted(() => {
         <div class="ai-model-selector relative">
           <div 
             @click="toggleDropdown"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-sm font-medium cursor-pointer transition-colors"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--bg-hover)] hover:bg-[var(--bg-hover-strong)] text-[var(--text-secondary)] text-sm font-medium cursor-pointer transition-colors"
           >
             <span v-if="isLoadingModels">加载中...</span>
             <span v-else-if="selectedModel">AI模型：{{ selectedModel }}</span>
@@ -119,14 +119,14 @@ onMounted(() => {
           <!-- 下拉菜单 -->
           <div 
             v-if="isDropdownOpen && aiModels.size > 0"
-            class="absolute top-full mt-2 w-48 bg-[#1E2228] border border-white/10 rounded-lg shadow-lg z-10"
+            class="absolute top-full mt-2 w-48 bg-[var(--bg-card)] border border-[var(--border-strong)] rounded-lg shadow-lg z-10"
           >
             <div 
               v-for="model in Array.from(aiModels.keys())" 
               :key="model"
               @click="selectModel(model)"
-              class="px-4 py-2 text-sm text-slate-300 hover:bg-white/5 cursor-pointer transition-colors"
-              :class="{ 'bg-blue-600/20 text-blue-400': model === selectedModel }"
+              class="px-4 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] cursor-pointer transition-colors"
+              :class="{ 'bg-[var(--accent-soft-bg-strong)] text-[var(--accent-soft)]': model === selectedModel }"
             >
               {{ model }}
             </div>
@@ -140,7 +140,7 @@ onMounted(() => {
         <button 
           @click="$emit('analyze', isAppendMode, aiModels.get(selectedModel) || 0)"
           :disabled="isAnalyzing || !inputText.trim() || !selectedModel"
-          class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all"
+          class="px-6 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-on-accent)] text-sm font-bold flex items-center gap-2 shadow-lg shadow-[var(--accent-glow)] transition-all"
         >
           <template v-if="isAnalyzing">
             <Loader2 class="w-4 h-4 animate-spin" />

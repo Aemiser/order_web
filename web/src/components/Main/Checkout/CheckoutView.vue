@@ -246,7 +246,7 @@ const handleCheckout = () => {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--text-faint);
   border-radius: 10px;
 }
 
