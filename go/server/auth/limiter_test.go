@@ -43,15 +43,18 @@ func TestLimiterUnlocksAfterDuration(t *testing.T) {
 	l := newTestLimiter()
 	now := time.Unix(1700000000, 0)
 
+	lockAt := now
 	for i := 0; i < 3; i++ {
-		l.RecordFailure("k", now.Add(time.Duration(i)*time.Second))
+		_, _ = l.RecordFailure("k", lockAt.Add(time.Duration(i)*time.Second))
 	}
+	lockAt = lockAt.Add(2 * time.Second) // 第 3 次失败的时刻即锁定起点
 
-	// 锁定满 5 分钟即解除，条目就地清除。
-	if ok, _ := l.Locked("k", now.Add(5*time.Minute).Add(time.Second)); ok {
+	// 锁定满 5 分钟即解除，条目就地清除（以 lockAt 为起点推算）。
+	unlockAt := lockAt.Add(5 * time.Minute).Add(time.Second)
+	if ok, _ := l.Locked("k", unlockAt); ok {
 		t.Fatalf("锁定期过后应解除")
 	}
-	if l.Remaining("k", now.Add(5*time.Minute).Add(time.Second)) != 3 {
+	if l.Remaining("k", unlockAt) != 3 {
 		t.Fatalf("解除后失败计数应清零，剩余应为 3")
 	}
 }
