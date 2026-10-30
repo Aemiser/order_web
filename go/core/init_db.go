@@ -50,3 +50,27 @@ func InitDB() *gorm.DB {
 	}
 	return db
 }
+
+// InitWuyinDB 吴饮独立数据库连接（settings.yaml dbWuyin）。
+// 未配置时返回 nil 且不 Fatal——吴饮是可选品牌，缺失只禁用 /api/wuyin/* 端点，
+// 不能拖垮一点点主链路的启动（与 InitDB 的 Fatal 语义刻意不同）。
+func InitWuyinDB() *gorm.DB {
+	dw := global.Config.DbWuyin
+	if dw.Empty() {
+		logrus.Infof("吴饮数据库未配置（dbWuyin），/api/wuyin 端点将不可用")
+		return nil
+	}
+
+	db, err := gorm.Open(mysql.Open(dw.GetDSN()), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true, //不生成外键约束
+	})
+	if err != nil {
+		logrus.Fatalf("吴饮数据库连接失败: %v", err)
+	}
+	sqlDB, err := db.DB()
+	sqlDB.SetMaxIdleConns(dw.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(dw.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+	logrus.Infof("吴饮数据库连接成功")
+	return db
+}

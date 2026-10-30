@@ -2,6 +2,23 @@
 
 订单识别 / 结账系统：Gin 后端（Go）+ Vue 3 前端（Vite + TypeScript）。
 
+双品牌：**一点点**（原有链路，斤计价）与 **吴饮**（吾饮良品香水柠檬，2026-10 新增，
+独立数据库、件计价、按仓库标签分组结账）。前端侧边栏顶部切换品牌。
+
+## 吴饮（吾饮良品）链路
+
+- **数据入口**：粘贴群聊文本 AI 识别（专用提示词 `go/config/systemPromptWuyin.txt`，
+  提取收件人/手机号/地址/省份/商品件数/发送人），或导入各仓日报 xlsx
+  （表头：日期/客户编码/客户/电话/物料编码/规格型号/物料名称/库存单位/实发数量）。
+- **标签**：按群聊发送人昵称匹配关键词自动打标（合肥仓/广西仓/云南仓…），
+  标签与关键词在「标签管理」页维护；匹配不到落「未分配」，预览与详情页均可手动改。
+- **结账**：按标签分组的商品×日期×件数账单，单价（元/件）落库回填，
+  导出 Excel 每标签一个 sheet，可全量或按单标签导出。
+- **独立库**：`settings.yaml` 的 `dbWuyin` 配置独立 MySQL 库（模板见
+  `go/config/settings.example.yaml`）；未配置时 `/api/wuyin/*` 端点统一报错，
+  一点点链路不受影响。首次使用建库后执行 `go run main.go -dbwuyin` 建表
+  （空表会播种默认仓库标签）。
+
 ## 目录结构
 
 ```
@@ -9,10 +26,10 @@ go/
   router/       路由注册
   handler/      HTTP 处理层
   application/  业务逻辑层
-  server/       数据服务层
+  server/       数据服务层（server/wuyin 为吴饮品牌平行链路）
   conf/ core/ global/ flags/ models/ utils/ common/   配置、初始化与公共组件
-  config/       运行时配置（settings.yaml、aimap.json、productbelong.json、systemPrompt.txt）
-web/            Vue 3 + Vite 前端
+  config/       运行时配置（settings.yaml、aimap.json、productbelong.json、systemPrompt.txt、systemPromptWuyin.txt）
+web/            Vue 3 + Vite 前端（components/Wuyin/ 为吴饮页面）
 deploy/         systemd 单元与 nginx 子路径片段模板
 scripts/        部署期在服务器上执行的脚本
 .github/        CI/CD 工作流

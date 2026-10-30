@@ -13,6 +13,17 @@ db:
       debug: false
       maxIdleConns: 10
       maxOpenConns: 100
+# 吴饮（吾饮良品）独立数据库：不配置则 /api/wuyin 端点不可用，一点点链路不受影响。
+# 首次使用先建库，再执行 go run main.go -dbwuyin 建表。
+dbWuyin:
+    host: <吴饮数据库主机地址>
+    port: 3306
+    user: <数据库用户名>
+    password: <数据库密码>
+    dbname: <吴饮数据库名，如 order_wuyin>
+    debug: false
+    maxIdleConns: 10
+    maxOpenConns: 100
 email:
     domain: <SMTP服务器域名>
     port: 587

@@ -82,7 +82,7 @@ jobs:
       - name: 组装部署包
         run: |
           # 仅打包静态配置；settings.yaml 与 productbelong.json 属服务器本地资产，不参与发布
-          cp go/config/aimap.json go/config/systemPrompt.txt bundle/config/
+          cp go/config/aimap.json go/config/systemPrompt.txt go/config/systemPromptWuyin.txt bundle/config/
           tar -czf bundle/web.tgz -C web/dist .
           tar -czf bundle.tgz -C bundle .
           ls -la bundle.tgz

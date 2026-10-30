@@ -43,7 +43,9 @@ mv -f "${APP_DIR}/server.new" "${APP_DIR}/server"
 
 # 只同步静态配置。settings.yaml 含密钥、productbelong.json 会被
 # PUT /api/checkout/product-belong 在运行期回写，二者均不得被部署覆盖。
-for f in aimap.json systemPrompt.txt; do
+# systemPromptWuyin.txt 为吴饮品牌提示词，服务器上不存在时服务只告警不阻断，
+# 但吴饮识别不可用，故随部署同步。
+for f in aimap.json systemPrompt.txt systemPromptWuyin.txt; do
   if [ -f "${WORK}/config/${f}" ]; then
     install -m 644 -o root -g orderweb "${WORK}/config/${f}" "${APP_DIR}/go/config/${f}"
     log "同步 go/config/${f}"

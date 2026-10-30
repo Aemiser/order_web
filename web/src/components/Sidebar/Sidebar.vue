@@ -1,60 +1,97 @@
 <script setup lang="ts">
-import { Box, FileText, Layers, Calculator, Settings, LogOut } from 'lucide-vue-next';
+import { Box, FileText, Layers, Calculator, Milk, Citrus, Tags } from 'lucide-vue-next';
 
 defineProps<{
   activeTab: string;
   isSystemReady: boolean;
   statusMessage: string;
+  brand: 'ydd' | 'wy';
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:activeTab', tab: string): void;
+  (e: 'update:brand', brand: 'ydd' | 'wy'): void;
 }>();
+
+// 双品牌：一点点（原有链路）/ 吴饮（吾饮良品，独立库+仓库标签）。
+// 切换品牌由 App 重置页签到该品牌首页。
+const switchBrand = (b: 'ydd' | 'wy') => emit('update:brand', b);
+
+const navItemClass = (active: boolean) =>
+  [
+    'w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left',
+    active
+      ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)] shadow-sm shadow-[var(--accent-glow)]'
+      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]',
+  ].join(' ');
 </script>
 
 <template>
   <aside class="w-64 bg-[var(--bg-sidebar)] border-r border-[var(--border)] flex flex-col justify-between py-6 h-full shrink-0">
     <div class="px-6">
-      <div class="flex items-center gap-3 mb-10 px-2">
+      <div class="flex items-center gap-3 mb-6 px-2">
         <div class="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center">
           <Box class="w-5 h-5 text-[var(--text-on-accent)]" />
         </div>
         <h1 class="text-xl font-bold tracking-tight text-[var(--text-primary)]">OrderMaster</h1>
       </div>
+
+      <!-- 品牌切换 -->
+      <div class="grid grid-cols-2 gap-1 p-1 mb-6 rounded-xl bg-[var(--bg-hover)]">
+        <button
+          @click="switchBrand('ydd')"
+          class="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all"
+          :class="brand === 'ydd' ? 'bg-[var(--bg-card)] text-[var(--accent)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'"
+        >
+          <Milk class="w-3.5 h-3.5" /> 一点点
+        </button>
+        <button
+          @click="switchBrand('wy')"
+          class="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all"
+          :class="brand === 'wy' ? 'bg-[var(--bg-card)] text-[var(--accent)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'"
+        >
+          <Citrus class="w-3.5 h-3.5" /> 吴饮
+        </button>
+      </div>
+
       <nav class="space-y-2 mt-2">
         <p class="px-4 mb-2 text-[11px] font-semibold uppercase tracking-widest text-[var(--text-faint)]">工作台</p>
-        <button 
-          @click="$emit('update:activeTab', 'input')"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group text-left"
-          :class="activeTab === 'input' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)] shadow-sm shadow-[var(--accent-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
-        >
-          <FileText class="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-          <span class="font-medium truncate">订单输入</span>
-        </button>
-        <button 
-          @click="$emit('update:activeTab', 'details')"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left"
-          :class="activeTab === 'details' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)] shadow-sm shadow-[var(--accent-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
-        >
-          <Layers class="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-          <span class="font-medium truncate">订单详情</span>
-        </button>
-        <button 
-          @click="$emit('update:activeTab', 'checkout')"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left"
-          :class="activeTab === 'checkout' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)] shadow-sm shadow-[var(--accent-glow)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
-        >
-          <Calculator class="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-          <span class="font-medium truncate">账单结算</span>
-        </button>
-<!--        <button -->
-<!--          @click="$emit('update:activeTab', 'settings')"-->
-<!--          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left"-->
-<!--          :class="activeTab === 'settings' ? 'bg-[var(--accent-soft-bg)] text-[var(--accent)] border-r-[3px] border-[var(--accent)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'"
-<!--        >-->
-<!--          <Settings class="w-5 h-5" />
-<!--          <span class="font-medium">应用设置</span>
-<!--        </button>-->
+
+        <!-- 一点点导航 -->
+        <template v-if="brand === 'ydd'">
+          <button @click="$emit('update:activeTab', 'input')" :class="navItemClass(activeTab === 'input')">
+            <FileText class="w-5 h-5 shrink-0" />
+            <span class="font-medium truncate">订单输入</span>
+          </button>
+          <button @click="$emit('update:activeTab', 'details')" :class="navItemClass(activeTab === 'details')">
+            <Layers class="w-5 h-5 shrink-0" />
+            <span class="font-medium truncate">订单详情</span>
+          </button>
+          <button @click="$emit('update:activeTab', 'checkout')" :class="navItemClass(activeTab === 'checkout')">
+            <Calculator class="w-5 h-5 shrink-0" />
+            <span class="font-medium truncate">账单结算</span>
+          </button>
+        </template>
+
+        <!-- 吴饮导航 -->
+        <template v-else>
+          <button @click="$emit('update:activeTab', 'wy-input')" :class="navItemClass(activeTab === 'wy-input')">
+            <FileText class="w-5 h-5 shrink-0" />
+            <span class="font-medium truncate">订单输入</span>
+          </button>
+          <button @click="$emit('update:activeTab', 'wy-details')" :class="navItemClass(activeTab === 'wy-details')">
+            <Layers class="w-5 h-5 shrink-0" />
+            <span class="font-medium truncate">订单详情</span>
+          </button>
+          <button @click="$emit('update:activeTab', 'wy-checkout')" :class="navItemClass(activeTab === 'wy-checkout')">
+            <Calculator class="w-5 h-5 shrink-0" />
+            <span class="font-medium truncate">标签结账</span>
+          </button>
+          <button @click="$emit('update:activeTab', 'wy-settings')" :class="navItemClass(activeTab === 'wy-settings')">
+            <Tags class="w-5 h-5 shrink-0" />
+            <span class="font-medium truncate">标签管理</span>
+          </button>
+        </template>
       </nav>
     </div>
     <div class="px-6">
@@ -65,10 +102,6 @@ defineEmits<{
           <span class="text-sm text-[var(--text-secondary)]">{{ statusMessage }}</span>
         </div>
       </div>
-      <!-- <div class="flex items-center gap-3 px-4 py-2 opacity-60 hover:opacity-100 cursor-pointer transition-opacity">
-        <LogOut class="w-4 h-4" />
-        <span class="text-sm">退出登录</span>
-      </div> -->
     </div>
   </aside>
 </template>

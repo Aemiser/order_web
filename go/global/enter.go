@@ -29,4 +29,16 @@ var (
 	// 在 AI 返回后才写入/写完——在途窗口内两者不一致，此时审核会把未落定的
 	// 新增批判为 missing 误报。计数器而非布尔：并发识别（连点多次）时不会提前放行。
 	RecognitionInFlight int32
+
+	// ---- 吴饮（吾饮良品）品牌链路：独立库与内存态，与一点点平行隔离 ----
+	// DbWuyin 吴饮独立数据库连接（settings.yaml dbWuyin 配置；未配置时为 nil，
+	// wuyin 端点统一返回"未配置"错误而非 panic，一点点链路不受影响）。
+	DbWuyin *gorm.DB
+	// WuyinAddressList 吴饮预览数据（内存态，同 AddressList 的单请求流假设）。
+	WuyinAddressList []models.WuyinAddressInfo
+	// SystemPromptWuyin 吴饮识别提示词（go/config/systemPromptWuyin.txt）。
+	SystemPromptWuyin string
+	// WuyinTagConfigs 仓库标签配置缓存（含关键词），tags 端点变更时整体重建。
+	// 读多写少：识别打标逐条读，配置变更是低频管理操作，整体重建足够。
+	WuyinTagConfigs []models.WuyinTagConfig
 )

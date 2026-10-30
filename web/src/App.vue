@@ -13,6 +13,7 @@ import OrderInputView from './components/Main/OrderInputView.vue';
 import OrderDetailsView from './components/Main/OrderDetailsView.vue';
 import AppSettingsView from './components/Main/AppSettingsView.vue';
 import CheckoutView from './components/Main/Checkout/CheckoutView.vue';
+import WuyinWorkspace from './components/Wuyin/WuyinWorkspace.vue';
 import * as orderApi from './api/order';
 import * as checkoutApi from './api/checkout';
 import { BASE } from './api/request';
@@ -56,6 +57,14 @@ const handleLogout = async () => {
 
 // --- State ---
 const activeTab = ref('input');
+// 双品牌：ydd = 一点点（原有链路），wy = 吴饮（吾饮良品，独立链路）。
+// 切换品牌时重置页签到该品牌首页。
+const brand = ref<'ydd' | 'wy'>('ydd');
+const switchBrand = (b: 'ydd' | 'wy') => {
+  if (brand.value === b) return;
+  brand.value = b;
+  activeTab.value = b === 'wy' ? 'wy-input' : 'input';
+};
 const inputText = ref('');
 const orders = ref<Order[]>([]);
 const isAnalyzing = ref(false);
@@ -505,6 +514,8 @@ onBeforeUnmount(() => {
   <div v-else class="flex h-screen w-full overflow-hidden bg-[var(--bg-app)] text-[var(--text-primary)] font-sans">
     <Sidebar
       v-model:activeTab="activeTab"
+      :brand="brand"
+      @update:brand="switchBrand"
       :isSystemReady="isSystemReady"
       :statusMessage="statusMessage"
     />
@@ -521,8 +532,15 @@ onBeforeUnmount(() => {
       <div class="flex-1 overflow-y-auto custom-scrollbar">
         <div class="max-w-7xl mx-auto px-5 py-6 lg:px-8 lg:py-8">
           <!-- Conditional View Rendering -->
+          <!-- 吴饮品牌：整体由 WuyinWorkspace 承载（含输入/详情/结账/标签设置），一点点视图零改动 -->
+          <WuyinWorkspace
+            v-if="brand === 'wy'"
+            :tab="activeTab"
+            @status="msg => statusMessage = msg"
+          />
+
           <OrderInputView
-            v-if="activeTab === 'input'"
+            v-if="brand === 'ydd' && activeTab === 'input'"
             v-model:inputText="inputText"
             :isAnalyzing="isAnalyzing"
             :orders="orders"
@@ -535,12 +553,12 @@ onBeforeUnmount(() => {
           />
 
           <OrderDetailsView
-            v-if="activeTab === 'details'"
+            v-if="brand === 'ydd' && activeTab === 'details'"
             :activeTab="activeTab"
           />
 
           <CheckoutView
-            v-if="activeTab === 'checkout'"
+            v-if="brand === 'ydd' && activeTab === 'checkout'"
             :isEditMode="isEditMode"
             :checkoutResponse="checkoutResponse"
             @save-prices="handleSavePrices"
@@ -561,8 +579,8 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Bottom Action Bar (Only show for Input view) -->
-      <footer 
-        v-if="activeTab === 'input'"
+      <footer
+        v-if="brand === 'ydd' && activeTab === 'input'"
         class="h-20 bg-[var(--bg-sidebar)] border-t border-[var(--border)] px-5 lg:px-8 flex items-center justify-center shrink-0"
       >
         <div class="w-full max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -588,8 +606,8 @@ onBeforeUnmount(() => {
       </footer>
 
       <!-- Bottom Action Bar (Only show for Checkout view) -->
-      <footer 
-        v-if="activeTab === 'checkout'"
+      <footer
+        v-if="brand === 'ydd' && activeTab === 'checkout'"
         class="h-20 bg-[var(--bg-sidebar)] border-t border-[var(--border)] px-5 lg:px-8 flex items-center justify-center shrink-0"
       >
         <div class="w-full max-w-7xl mx-auto flex items-center justify-between gap-4">

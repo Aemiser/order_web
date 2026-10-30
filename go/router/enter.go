@@ -58,6 +58,32 @@ func Setup() *gin.Engine {
 				checkoutGroup.POST("/price", handler.SetPrice)
 				checkoutGroup.POST("/export", handler.ExportCheckout)
 			}
+
+			// 吴饮（吾饮良品）品牌链路：独立库 + 仓库标签。结构与 order 组同款：
+			// 字面量子路径与 /:id 参数路由共存，gin 静态路由优先匹配
+			// （/api/wuyin/tags 命中标签端点，其余 PUT/DELETE 命中 :id）。
+			wuyinGroup := authed.Group("/wuyin")
+			{
+				wuyinGroup.POST("/recognition", handler.WuyinRecognition)
+				wuyinGroup.POST("/recognition/stream", handler.WuyinRecognitionStream)
+				wuyinGroup.GET("/preview", handler.GetWuyinPreview)
+				wuyinGroup.PUT("/preview", handler.SetWuyinPreview)
+				wuyinGroup.DELETE("/preview/:id", handler.DeleteWuyinPreview)
+				wuyinGroup.POST("/import", handler.WuyinImportExcel)
+				wuyinGroup.POST("/create", handler.CreateWuyinOrder)
+				wuyinGroup.POST("/export", handler.ExportWuyinOrder)
+				wuyinGroup.POST("/query", handler.WuyinOrderQuery)
+				wuyinGroup.GET("/tag-stats", handler.WuyinTagStats)
+				wuyinGroup.GET("/tags", handler.ListWuyinTagConfigs)
+				wuyinGroup.POST("/tags", handler.CreateWuyinTagConfig)
+				wuyinGroup.PUT("/tags/:id", handler.UpdateWuyinTagConfig)
+				wuyinGroup.DELETE("/tags/:id", handler.DeleteWuyinTagConfig)
+				wuyinGroup.POST("/checkout/daydata", handler.GetWuyinDayData)
+				wuyinGroup.POST("/checkout/price", handler.SetWuyinPrice)
+				wuyinGroup.POST("/checkout/export", handler.ExportWuyinCheckout)
+				wuyinGroup.PUT("/:id", handler.UpdateWuyinOrder)
+				wuyinGroup.DELETE("/:id", handler.DeleteWuyinOrder)
+			}
 		}
 	}
 
